@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "WQz6Hj4PmxM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Lenovo\\HospitalApp\\HospitalApp.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Lenovo\\.nuget\\packages\\oracle.manageddataaccess.core\\23.26.100\\oracle.manageddataaccess.core.23.26.100.nupkg.sha512",
+    "C:\\Users\\Lenovo\\.nuget\\packages\\system.directoryservices.protocols\\8.0.2\\system.directoryservices.protocols.8.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}
