@@ -1,0 +1,29 @@
+# Build results
+bin/
+obj/
+publish/
+*.exe
+*.dll
+*.pdb
+
+# Visual Studio Code
+.vscode/
+
+# User-specific files
+*.user
+*.userprefs
+*.suo
+
+# IDE files
+.vs/
+*.swp
+*.swo
+
+# NuGet
+.nuget/
+*.nupkg
+*.snupkg
+
+# Other
+*.log
+.DS_Store

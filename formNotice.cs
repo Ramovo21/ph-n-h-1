@@ -4,22 +4,19 @@ using System.Drawing;
 using System.Windows.Forms;
 using Oracle.ManagedDataAccess.Client;
 using HospitalApp.Services;
-using HospitalApp.Forms;
 
 namespace HospitalApp
 {
-public class FormUser : Form
+public class formNotice : Form
 {
 DataGridView grid;
-string currentUser;
-string currentPass;
-
-    public FormUser(string user, string pass)
+string user, pass;
+    public formNotice(string u, string p)
     {
-        currentUser = user;
-        currentPass = pass;
+        user = u;
+        pass = p;
 
-        this.Text = "USER PANEL - " + user;
+        this.Text = "THÔNG BÁO (OLS)";
         this.WindowState = FormWindowState.Maximized;
         this.BackColor = Color.FromArgb(20, 30, 50);
 
@@ -27,17 +24,16 @@ string currentPass;
         LoadData();
     }
 
-    // ================= UI =================
+    // ===== UI =====
     void BuildUI()
     {
-        // ===== HEADER =====
         Panel header = new Panel();
         header.Dock = DockStyle.Top;
         header.Height = 80;
-        header.BackColor = Color.FromArgb(30, 60, 120);
+        header.BackColor = Color.FromArgb(45, 90, 180);
 
         Label title = new Label();
-        title.Text = "HOSPITAL USER PANEL";
+        title.Text = "THÔNG BÁO BỆNH VIỆN (OLS)";
         title.Font = new Font("Segoe UI", 22, FontStyle.Bold);
         title.ForeColor = Color.White;
         title.Dock = DockStyle.Fill;
@@ -45,71 +41,45 @@ string currentPass;
 
         header.Controls.Add(title);
 
-        // ===== USER INFO =====
         Label lblUser = new Label();
-        lblUser.Text = "User: " + currentUser;
+        lblUser.Text = "User: " + user;
         lblUser.ForeColor = Color.White;
         lblUser.Font = new Font("Segoe UI", 12, FontStyle.Bold);
         lblUser.Dock = DockStyle.Top;
-        lblUser.Height = 40;
+        lblUser.Height = 35;
         lblUser.TextAlign = ContentAlignment.MiddleCenter;
 
-        // ===== BUTTON PANEL =====
         Panel btnPanel = new Panel();
         btnPanel.Dock = DockStyle.Top;
         btnPanel.Height = 60;
 
-        // Reload
-        Button btnReload = CreateButton("Reload Data", Color.DodgerBlue);
+        Button btnReload = CreateButton("Reload", Color.DodgerBlue);
         btnReload.Left = 20;
         btnReload.Top = 10;
         btnReload.Click += (s, e) => LoadData();
 
-        // Logout (quay về login)
-        Button btnLogout = CreateButton("Logout", Color.IndianRed);
-        btnLogout.Left = 200;
-        btnLogout.Top = 10;
-        btnLogout.Click += (s, e) =>
-        {
-            this.Hide();
-            LoginForm login = new LoginForm();
-            login.Show();
-        };
-
-        // OLS
-        Button btnOLS = CreateButton("Thông báo (OLS)", Color.MediumPurple);
-        btnOLS.Left = 380;
-        btnOLS.Top = 10;
-        btnOLS.Click += (s, e) =>
-        {
-            formNotice f = new formNotice(currentUser, currentPass);
-            f.Show();
-        };
-
-        // (Optional) Quay lại Login riêng
-        Button btnBack = CreateButton("Back Login", Color.Gray);
-        btnBack.Left = 580;
-        btnBack.Top = 10;
-        btnBack.Click += (s, e) =>
-        {
-            this.Hide();
-            LoginForm login = new LoginForm();
-            login.Show();
-        };
+        Button btnClose = CreateButton("Đóng", Color.IndianRed);
+        btnClose.Left = 160;
+        btnClose.Top = 10;
+        btnClose.Click += (s, e) => this.Close();
 
         btnPanel.Controls.Add(btnReload);
-        btnPanel.Controls.Add(btnLogout);
-        btnPanel.Controls.Add(btnOLS);
-        btnPanel.Controls.Add(btnBack);
+        btnPanel.Controls.Add(btnClose);
 
-        // ===== GRID =====
         grid = new DataGridView();
         grid.Dock = DockStyle.Fill;
         grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         grid.RowHeadersVisible = false;
         grid.BackgroundColor = Color.White;
 
-        // ===== ADD =====
+        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.Navy;
+        grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+        grid.EnableHeadersVisualStyles = false;
+
+        grid.DefaultCellStyle.Font = new Font("Segoe UI", 11);
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.LightGray;
+
         this.Controls.Add(grid);
         this.Controls.Add(btnPanel);
         this.Controls.Add(lblUser);
@@ -118,12 +88,11 @@ string currentPass;
         grid.BringToFront();
     }
 
-    // ================= BUTTON STYLE =================
     Button CreateButton(string text, Color color)
     {
         Button btn = new Button();
         btn.Text = text;
-        btn.Width = 150;
+        btn.Width = 120;
         btn.Height = 40;
         btn.BackColor = color;
         btn.ForeColor = Color.White;
@@ -137,27 +106,16 @@ string currentPass;
         return btn;
     }
 
-    // ================= LOAD DATA (VPD) =================
+    // ===== LOAD DATA (OLS) =====
     void LoadData()
     {
-        string sql = "";
-
-        if (currentUser.StartsWith("BS") ||
-            currentUser.StartsWith("DPV") ||
-            currentUser.StartsWith("KTV"))
-        {
-            sql = "SELECT * FROM V_CURRENT_NHANVIEN";
-        }
-        else if (currentUser.StartsWith("BN"))
-        {
-            sql = "SELECT * FROM V_CURRENT_BENHNHAN";
-        }
+        string sql = "SELECT NOIDUNG, NGAYGIO, DIADIEM FROM BVOWNER.THONGBAO";
 
         try
         {
             DBConnection db = new DBConnection();
 
-            using (OracleConnection conn = db.GetConnection(currentUser, currentPass))
+            using (OracleConnection conn = db.GetConnection(user, pass))
             {
                 conn.Open();
 
@@ -169,16 +127,15 @@ string currentPass;
 
                 if (dt.Rows.Count == 0)
                 {
-                    MessageBox.Show("⚠ Không có dữ liệu cho user này!");
+                    MessageBox.Show("Không có thông báo (OLS đang lọc dữ liệu)");
                 }
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Lỗi load data: " + ex.Message);
+            MessageBox.Show("Lỗi: " + ex.Message);
         }
     }
 }
-
 
 }
