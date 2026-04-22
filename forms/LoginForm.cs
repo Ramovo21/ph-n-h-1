@@ -1,205 +1,245 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using System.Windows.Forms; // Thư viện quan trọng cho giao diện
 using Oracle.ManagedDataAccess.Client;
 using HospitalApp.Services;
 
 namespace HospitalApp.Forms
 {
-public class LoginForm : Form
-{
-TextBox txtUser, txtPass;
-Button btnLogin;
-Label lblError;
-
-
-    public LoginForm()
+    public class LoginForm : Form
     {
-        InitUI();
-    }
+        // Khai báo các thành phần giao diện
+        private TextBox txtUser, txtPass;
+        private Button btnLogin, btnShowPass;
+        private CheckBox chkRemember;
+        private Label lblError, lblTitle;
+        private Panel bg, card;
+        
+        // Sử dụng đầy đủ tên namespace để tránh lỗi "Ambiguous reference" cho Timer
+        private System.Windows.Forms.Timer animTimer; 
+        private float tick = 0;
+        private bool isPassVisible = false;
 
-    void InitUI()
-    {
-        this.Text = "Hospital Login";
-        this.Size = new Size(520, 420);
-        this.StartPosition = FormStartPosition.CenterScreen;
-        this.FormBorderStyle = FormBorderStyle.None;
-        this.BackColor = Color.FromArgb(15, 23, 42);
-
-        // ===== CARD =====
-        Panel card = new Panel();
-        card.Size = new Size(360, 300);
-        card.BackColor = Color.FromArgb(30, 41, 59);
-        card.Left = (this.Width - card.Width) / 2;
-        card.Top = (this.Height - card.Height) / 2;
-
-        // ===== TITLE =====
-        Label title = new Label();
-        title.Text = "HOSPITAL LOGIN";
-        title.Font = new Font("Segoe UI", 18, FontStyle.Bold);
-        title.ForeColor = Color.White;
-        title.Width = 300;
-        title.Height = 40;
-        title.Left = 30;
-        title.Top = 20;
-        title.TextAlign = ContentAlignment.MiddleCenter;
-
-        // ===== USER =====
-        txtUser = CreateTextbox("👤 Username", 80);
-
-        // ===== PASS =====
-        txtPass = CreateTextbox("🔒 Password", 130);
-        txtPass.PasswordChar = '*';
-
-        // ===== ERROR =====
-        lblError = new Label();
-        lblError.ForeColor = Color.Red;
-        lblError.Width = 300;
-        lblError.Height = 25;
-        lblError.Left = 30;
-        lblError.Top = 170;
-        lblError.TextAlign = ContentAlignment.MiddleCenter;
-
-        // ===== LOGIN BUTTON =====
-        btnLogin = new Button();
-        btnLogin.Text = "LOGIN";
-        btnLogin.Width = 280;
-        btnLogin.Height = 45;
-        btnLogin.Left = 40;
-        btnLogin.Top = 210;
-
-        btnLogin.BackColor = Color.FromArgb(59, 130, 246);
-        btnLogin.ForeColor = Color.White;
-        btnLogin.Font = new Font("Segoe UI", 12, FontStyle.Bold);
-        btnLogin.FlatStyle = FlatStyle.Flat;
-        btnLogin.FlatAppearance.BorderSize = 0;
-
-        btnLogin.MouseEnter += (s, e) =>
-            btnLogin.BackColor = Color.FromArgb(96, 165, 250);
-
-        btnLogin.MouseLeave += (s, e) =>
-            btnLogin.BackColor = Color.FromArgb(59, 130, 246);
-
-        btnLogin.Click += BtnLogin_Click;
-
-        // ===== CLOSE =====
-        Button btnClose = new Button();
-        btnClose.Text = "X";
-        btnClose.BackColor = Color.FromArgb(239, 68, 68);
-        btnClose.ForeColor = Color.White;
-        btnClose.Width = 40;
-        btnClose.Height = 30;
-        btnClose.Left = this.Width - 50;
-        btnClose.Top = 5;
-        btnClose.FlatStyle = FlatStyle.Flat;
-        btnClose.FlatAppearance.BorderSize = 0;
-        btnClose.Click += (s, e) => Application.Exit();
-
-        // ===== ADD =====
-        card.Controls.Add(title);
-        card.Controls.Add(txtUser);
-        card.Controls.Add(txtPass);
-        card.Controls.Add(lblError);
-        card.Controls.Add(btnLogin);
-
-        this.Controls.Add(card);
-        this.Controls.Add(btnClose);
-
-        this.AcceptButton = btnLogin;
-    }
-
-    // ===== TEXTBOX =====
-    TextBox CreateTextbox(string placeholder, int top)
-    {
-        TextBox txt = new TextBox();
-        txt.Width = 280;
-        txt.Height = 35;
-        txt.Left = 40;
-        txt.Top = top;
-        txt.Font = new Font("Segoe UI", 11);
-        txt.BackColor = Color.FromArgb(51, 65, 85);
-        txt.ForeColor = Color.White;
-        txt.BorderStyle = BorderStyle.FixedSingle;
-
-        txt.Text = placeholder;
-
-        txt.Enter += (s, e) =>
+        public LoginForm()
         {
-            if (txt.Text == placeholder)
-            {
-                txt.Text = "";
-            }
-        };
+            // Tối ưu hóa việc vẽ giao diện, chống giật (flicker)
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | 
+                          ControlStyles.DoubleBuffer | ControlStyles.OptimizedDoubleBuffer, true);
+            this.UpdateStyles();
 
-        txt.Leave += (s, e) =>
-        {
-            if (txt.Text == "")
-            {
-                txt.Text = placeholder;
-            }
-        };
+            this.Size = new Size(1100, 750);
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(10, 15, 28);
 
-        return txt;
-    }
-
-    // ===== LOGIN =====
-    private void BtnLogin_Click(object sender, EventArgs e)
-    {
-        string user = txtUser.Text.Trim();
-        string pass = txtPass.Text.Trim();
-
-        if (user == "" || user.Contains("Username") ||
-            pass == "" || pass.Contains("Password"))
-        {
-            lblError.Text = "⚠ Nhập đầy đủ thông tin!";
-            return;
+            InitUI();
+            StartAnimations();
         }
 
-        try
+        private void InitUI()
         {
-            DBConnection db = new DBConnection();
+            // Nền gradient động
+            bg = new DoubleBufferedPanel { Dock = DockStyle.Fill };
+            bg.Paint += DrawCinematicBackground;
+            bg.MouseDown += (s, e) => { ReleaseCapture(); SendMessage(Handle, 0xA1, 0x2, 0); };
+            this.Controls.Add(bg);
 
-            using (OracleConnection conn = db.GetConnection(user, pass))
-            {
-                conn.Open();
-            }
+            // Thẻ Card chứa form đăng nhập
+            card = new DoubleBufferedPanel { 
+                Size = new Size(460, 620), 
+                BackColor = Color.FromArgb(30, 40, 60) 
+            };
+            card.Paint += (s, e) => DrawCardBorder(e, 35);
+            bg.Controls.Add(card);
 
-            lblError.Text = "";
+            // Tiêu đề to rõ
+            lblTitle = new Label {
+                Text = "HOSPITAL SYSTEM",
+                Font = new Font("Segoe UI", 26, FontStyle.Bold),
+                ForeColor = Color.White, TextAlign = ContentAlignment.MiddleCenter,
+                Height = 80, Width = 460, Top = 40, BackColor = Color.Transparent
+            };
 
-            if (user.ToUpper() == "SYS")
-            {
-                new FormAdmin(user, pass).Show();
-            }
-            else
-            {
-                new FormUser(user, pass).Show();
-            }
+            // --- PHẦN USERNAME ---
+            CreateHeaderLabel("Username", 150);
+            txtUser = CreateInputBox("👤 Enter Username", 190);
 
-            this.Hide();
+            // --- PHẦN PASSWORD (Có con mắt) ---
+            CreateHeaderLabel("Password", 280);
+            txtPass = CreateInputBox("🔒 Enter Password", 320);
+            txtPass.PasswordChar = '●';
+            txtPass.Width = 310; // Thu ngắn một chút để đặt nút con mắt
+
+            btnShowPass = new Button {
+                Text = "👁", // Biểu tượng con mắt
+                Size = new Size(45, 40), Left = 360, Top = 320,
+                FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray,
+                BackColor = Color.FromArgb(30, 41, 59), Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 14)
+            };
+            btnShowPass.FlatAppearance.BorderSize = 0;
+            btnShowPass.Click += TogglePasswordVisibility;
+
+            // --- GHI NHỚ MẬT KHẨU ---
+            chkRemember = new CheckBox {
+                Text = "Remember me", 
+                ForeColor = Color.LightGray,
+                Font = new Font("Segoe UI", 11),
+                Left = 50, Top = 385, AutoSize = true, Cursor = Cursors.Hand
+            };
+
+            // Thông báo lỗi
+            lblError = new Label {
+                ForeColor = Color.FromArgb(255, 80, 100), TextAlign = ContentAlignment.MiddleCenter,
+                Height = 35, Width = 360, Left = 50, Top = 425,
+                Font = new Font("Segoe UI", 10, FontStyle.Italic), BackColor = Color.Transparent
+            };
+
+            // Nút đăng nhập hiện đại
+            btnLogin = new ModernButton {
+                Text = "SIGN IN", Width = 360, Height = 60, Left = 50, Top = 475,
+                BackColor = Color.FromArgb(37, 99, 235), ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 14, FontStyle.Bold), Cursor = Cursors.Hand
+            };
+            btnLogin.Click += BtnLogin_Click;
+
+            card.Controls.AddRange(new Control[] { lblTitle, lblError, btnLogin, btnShowPass, chkRemember });
+            CenterCard();
+
+            // Nút đóng ứng dụng
+            Button btnClose = new Button {
+                Text = "✕", Size = new Size(45, 35), Location = new Point(1040, 15),
+                FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.Transparent
+            };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.Click += (s, e) => Application.Exit();
+            bg.Controls.Add(btnClose);
         }
-        catch (OracleException ex)
-        {
-            // 🔥 PHÂN BIỆT LỖI
-            if (ex.Number == 1017)
-            {
-                lblError.Text = "❌ Sai username hoặc password!";
-            }
-            else if (ex.Number == 1918)
-            {
-                lblError.Text = "❌ Tài khoản không tồn tại!";
-            }
-            else
-            {
-                lblError.Text = "❌ Lỗi kết nối!";
+
+        // Hàm tạo nhãn tiêu đề nhỏ phía trên ô nhập
+        private void CreateHeaderLabel(string text, int top) {
+            Label lbl = new Label {
+                Text = text, ForeColor = Color.FromArgb(56, 189, 248),
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Left = 50, Top = top, AutoSize = true, BackColor = Color.Transparent
+            };
+            card.Controls.Add(lbl);
+        }
+
+        // Hàm tạo ô nhập văn bản (TextBox) to rõ
+        private TextBox CreateInputBox(string placeholder, int top) {
+            TextBox txt = new TextBox {
+                Width = 360, Left = 50, Top = top,
+                Font = new Font("Segoe UI", 15), // Chữ to
+                BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.Gray,
+                BorderStyle = BorderStyle.FixedSingle, Text = placeholder
+            };
+            txt.Enter += (s, e) => { if (txt.Text == placeholder) { txt.Text = ""; txt.ForeColor = Color.White; } };
+            txt.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txt.Text)) { txt.Text = placeholder; txt.ForeColor = Color.Gray; } };
+            card.Controls.Add(txt);
+            return txt;
+        }
+
+        // Logic ẩn/hiện mật khẩu
+        private void TogglePasswordVisibility(object sender, EventArgs e) {
+            isPassVisible = !isPassVisible;
+            if (isPassVisible) {
+                txtPass.PasswordChar = '\0'; // Hiện chữ
+                btnShowPass.Text = "🙈"; // Đổi icon
+                btnShowPass.ForeColor = Color.FromArgb(56, 189, 248);
+            } else {
+                txtPass.PasswordChar = '●'; // Ẩn chữ
+                btnShowPass.Text = "👁";
+                btnShowPass.ForeColor = Color.Gray;
             }
         }
-        catch
+
+        private void BtnLogin_Click(object sender, EventArgs e)
         {
-            lblError.Text = "❌ Không thể kết nối DB!";
+            string user = txtUser.Text.Trim();
+            string pass = txtPass.Text.Trim();
+            
+            if (string.IsNullOrEmpty(user) || user.Contains("Enter") || string.IsNullOrEmpty(pass)) {
+                lblError.Text = "⚠ Please enter credentials!";
+                return;
+            }
+
+            try {
+                DBConnection db = new DBConnection();
+                using (OracleConnection conn = db.GetConnection(user, pass)) { conn.Open(); }
+                lblError.Text = "";
+                if (user.ToUpper() == "SYS") { new FormAdmin(user, pass).Show(); }
+                else { new FormUser(user, pass).Show(); }
+                this.Hide();
+            }
+            catch {
+                lblError.Text = "❌ Invalid Username or Password!";
+                ShowErrorEffect();
+            }
+        }
+
+        // --- HIỆU ỨNG ANIMATION ---
+        private void StartAnimations() {
+            animTimer = new System.Windows.Forms.Timer { Interval = 20 };
+            animTimer.Tick += (s, e) => { tick += 0.04f; bg.Invalidate(); };
+            animTimer.Start();
+        }
+
+        private void DrawCinematicBackground(object sender, PaintEventArgs e) {
+            Graphics g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            using (LinearGradientBrush br = new LinearGradientBrush(bg.ClientRectangle, Color.FromArgb(10, 15, 28), Color.FromArgb(30, 50, 100), 45f))
+                g.FillRectangle(br, bg.ClientRectangle);
+        }
+
+        private void DrawCardBorder(PaintEventArgs e, int r) {
+            Graphics g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            using (Pen p = new Pen(Color.FromArgb(60, 255, 255, 255), 2)) {
+                GraphicsPath path = new GraphicsPath();
+                path.AddArc(0, 0, r, r, 180, 90); path.AddArc(card.Width - r, 0, r, r, 270, 90);
+                path.AddArc(card.Width - r, card.Height - r, r, r, 0, 90); path.AddArc(0, card.Height - r, r, r, 90, 90);
+                path.CloseFigure(); g.DrawPath(p, path);
+            }
+        }
+
+        private void ShowErrorEffect() {
+            System.Windows.Forms.Timer shake = new System.Windows.Forms.Timer { Interval = 30 };
+            int count = 0;
+            shake.Tick += (s, e) => {
+                card.Left += (count % 2 == 0) ? 10 : -10;
+                if (++count > 6) { shake.Stop(); CenterCard(); }
+            };
+            shake.Start();
+        }
+
+        private void CenterCard() {
+            card.Location = new Point((bg.Width - card.Width) / 2, (bg.Height - card.Height) / 2);
+            ApplyRegion(card, 40);
+        }
+
+        private void ApplyRegion(Control c, int r) {
+            GraphicsPath gp = new GraphicsPath();
+            gp.AddArc(0, 0, r*2, r*2, 180, 90); gp.AddArc(c.Width - r*2, 0, r*2, r*2, 270, 90);
+            gp.AddArc(c.Width - r*2, c.Height - r*2, r*2, r*2, 0, 90); gp.AddArc(0, c.Height - r*2, r*2, r*2, 90, 90);
+            c.Region = new Region(gp);
+        }
+
+        [DllImport("user32.dll")] public static extern bool ReleaseCapture();
+        [DllImport("user32.dll")] public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+    }
+
+    // Lớp bổ trợ cho nút bấm hiện đại
+    public class ModernButton : Button {
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); this.BackColor = Color.FromArgb(59, 130, 246); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); this.BackColor = Color.FromArgb(37, 99, 235); }
+    }
+
+    // Lớp bổ trợ chống nháy hình
+    public class DoubleBufferedPanel : Panel {
+        public DoubleBufferedPanel() { 
+            this.DoubleBuffered = true; 
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true); 
         }
     }
-}
-
-
 }
