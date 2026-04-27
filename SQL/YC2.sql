@@ -3,7 +3,7 @@
 -- TAT CA chay bang BV_ADMIN (policy admin)
 -- =========================================================================
 
-CONNECT BV_ADMIN/"BvAdmin@2026!"@localhost:1521/XEPDB1
+CONNECT BVOWNER/BVOwner#2026@localhost:1521/XEPDB1
 
 -- ===================== LEVELS =====================
 EXEC LBACSYS.SA_COMPONENTS.CREATE_LEVEL('BV_POLICY', 30, 'BGD', 'Ban Giam Doc');

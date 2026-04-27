@@ -120,7 +120,7 @@ SELECT BAK_ID, BAK_TIME, BAK_TYPE, STATUS FROM BACKUP_LOG ORDER BY BAK_ID DESC F
 PROMPT --- Scheduler Job ---
 
 CONNECT sys/"NtMl1504:))"@localhost:1521/XEPDB1 AS SYSDBA
-SELECT owner, job_name, state, enabled FROM dba_scheduler_jobs WHERE owner='BV_ADMIN' AND job_name='JOB_DAILY_BACKUP';
+SELECT owner, job_name, state, enabled FROM dba_scheduler_jobs WHERE owner='BVOWNER' AND job_name='JOB_DAILY_BACKUP';
 
 PROMPT --- Recovery Procedures ---
 

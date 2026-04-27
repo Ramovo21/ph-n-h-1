@@ -166,11 +166,21 @@ namespace HospitalApp.Forms
                 return;
             }
 
+            // Chặn các tài khoản hệ thống — không cho đăng nhập qua UI
+            string upperUser = user.ToUpper();
+            string[] blockedAccounts = { "SYS", "SYSTEM", "LBACSYS" };
+            foreach (string blocked in blockedAccounts) {
+                if (upperUser == blocked) {
+                    lblError.Text = "⚠ Tài khoản hệ thống không được phép đăng nhập!";
+                    return;
+                }
+            }
+
             try {
                 DBConnection db = new DBConnection();
                 using (OracleConnection conn = db.GetConnection(user, pass)) { conn.Open(); }
                 lblError.Text = "";
-                if (user.ToUpper() == "SYS" || user.ToUpper() == "BV_ADMIN") { new FormAdmin(user, pass).Show(); }
+                if (upperUser == "BVOWNER") { new FormAdmin(user, pass).Show(); }
                 else { new FormUser(user, pass).Show(); }
                 this.Hide();
             }

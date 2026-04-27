@@ -31,6 +31,8 @@
 
                 private Panel pnlPrivSubmenu;
 
+                private Panel pnlDataSubmenu;
+
                 // Bảng màu hiện đại
                 private readonly Color clrPrimary = Color.FromArgb(41, 128, 185);    // Blue (Dùng cho Header)
                 private readonly Color clrSidebar = Color.FromArgb(33, 37, 41);     // Dark Gray
@@ -127,18 +129,39 @@
         pnlPrivSubmenu.Visible = !pnlPrivSubmenu.Visible;
     });
 
-    // 5. THÔNG BÁO (OLS)
+    // 5. MENU CON: XEM DỮ LIỆU (Toàn bộ bảng nghiệp vụ)
+    pnlDataSubmenu = new Panel { Dock = DockStyle.Top, Height = 0, Visible = false, BackColor = Color.FromArgb(45, 50, 55) };
+    var btnViewNV   = CreateSubMenuBtn("  ›  Nhân viên",       () => LoadPage(CreateDataViewPage("BVOWNER.NHANVIEN", "SELECT * FROM BVOWNER.NHANVIEN ORDER BY MANV"), "Dữ liệu: Nhân viên"));
+    var btnViewBN   = CreateSubMenuBtn("  ›  Bệnh nhân",       () => LoadPage(CreateDataViewPage("BVOWNER.BENHNHAN", "SELECT * FROM BVOWNER.BENHNHAN ORDER BY MABN"), "Dữ liệu: Bệnh nhân"));
+    var btnViewHSBA = CreateSubMenuBtn("  ›  Hồ sơ bệnh án",   () => LoadPage(CreateDataViewPage("BVOWNER.HSBA", "SELECT * FROM BVOWNER.HSBA ORDER BY MAHSBA"), "Dữ liệu: Hồ sơ bệnh án"));
+    var btnViewDT   = CreateSubMenuBtn("  ›  Đơn thuốc",       () => LoadPage(CreateDataViewPage("BVOWNER.DONTHUOC", "SELECT * FROM BVOWNER.DONTHUOC ORDER BY MAHSBA"), "Dữ liệu: Đơn thuốc"));
+    var btnViewDV   = CreateSubMenuBtn("  ›  Dịch vụ (HSBA_DV)", () => LoadPage(CreateDataViewPage("BVOWNER.HSBA_DV", "SELECT * FROM BVOWNER.HSBA_DV ORDER BY MAHSBA"), "Dữ liệu: Dịch vụ hỗ trợ"));
+    // Thêm vào panel (Dock=Top nên thứ tự ngược)
+    pnlDataSubmenu.Controls.Add(btnViewDV);
+    pnlDataSubmenu.Controls.Add(btnViewDT);
+    pnlDataSubmenu.Controls.Add(btnViewHSBA);
+    pnlDataSubmenu.Controls.Add(btnViewBN);
+    pnlDataSubmenu.Controls.Add(btnViewNV);
+    pnlDataSubmenu.Height = pnlDataSubmenu.Controls.Count * 45;
+
+    var btnDataHeader = CreateMenuBtn("📊  Xem dữ liệu  ▼", () => {
+        pnlDataSubmenu.Visible = !pnlDataSubmenu.Visible;
+    });
+
+    // 6. THÔNG BÁO (OLS)
     var btnNotice = CreateMenuBtn("📢  Thông báo (OLS)", () => LoadPage(CreateNoticePage(), "Quản lý Thông báo (OLS)"));
 
-    // 6. ĐĂNG XUẤT
+    // 7. ĐĂNG XUẤT
     var btnLogout = CreateMenuBtn("🚪  ĐĂNG XUẤT", () => this.Close());
     btnLogout.ForeColor = Color.Salmon;
 
-    // 7. ADD VÀO SIDEBAR (Thứ tự hiển thị từ trên xuống)
+    // 8. ADD VÀO SIDEBAR (Thứ tự hiển thị từ trên xuống - Dock=Top nên add ngược)
     sidebar.Controls.Add(btnLogout);
-    sidebar.Controls.Add(btnNotice);      // Thông báo OLS
-    sidebar.Controls.Add(pnlPrivSubmenu); // Con của Cấp quyền
-    sidebar.Controls.Add(btnPrivHeader);  // Cha của Cấp quyền
+    sidebar.Controls.Add(btnNotice);       // Thông báo OLS
+    sidebar.Controls.Add(pnlDataSubmenu);  // Con của Xem dữ liệu
+    sidebar.Controls.Add(btnDataHeader);   // Cha của Xem dữ liệu
+    sidebar.Controls.Add(pnlPrivSubmenu);  // Con của Cấp quyền
+    sidebar.Controls.Add(btnPrivHeader);   // Cha của Cấp quyền
     sidebar.Controls.Add(pnlRoleSubmenu); 
     sidebar.Controls.Add(btnRoleHeader);  
     sidebar.Controls.Add(pnlUserSubmenu); 
@@ -319,20 +342,30 @@ private void LoadTablesToCombo()
     try {
         using (var conn = db.GetConnection(currentUser, currentPass)) {
             conn.Open();
-            // Thử dùng USER_TABLES nếu ALL_TABLES không ra dữ liệu
-            string sql = "SELECT table_name FROM user_tables ORDER BY table_name";
-            var cmd = new OracleCommand(sql, conn);
-            var reader = cmd.ExecuteReader();
-
             cbObject.Items.Clear();
-            while (reader.Read()) {
-                cbObject.Items.Add(reader.GetString(0));
-            }
+
+            // Load tables
+            string sqlTables = "SELECT table_name FROM all_tables WHERE owner='BVOWNER' ORDER BY table_name";
+            var reader = new OracleCommand(sqlTables, conn).ExecuteReader();
+            while (reader.Read()) cbObject.Items.Add(reader.GetString(0));
+            reader.Close();
+
+            // Load views
+            string sqlViews = "SELECT view_name FROM all_views WHERE owner='BVOWNER' ORDER BY view_name";
+            reader = new OracleCommand(sqlViews, conn).ExecuteReader();
+            while (reader.Read()) cbObject.Items.Add("[VIEW] " + reader.GetString(0));
+            reader.Close();
+
+            // Load procedures & functions
+            string sqlProcs = "SELECT object_name, object_type FROM all_objects WHERE owner='BVOWNER' AND object_type IN ('PROCEDURE','FUNCTION','PACKAGE') ORDER BY object_type, object_name";
+            reader = new OracleCommand(sqlProcs, conn).ExecuteReader();
+            while (reader.Read()) cbObject.Items.Add("[" + reader.GetString(1) + "] " + reader.GetString(0));
+            reader.Close();
+
             if (cbObject.Items.Count > 0) cbObject.SelectedIndex = 0;
         }
     } catch (Exception ex) { 
-        // Thêm dòng này để biết chính xác lỗi gì nếu nó không hiện
-        MessageBox.Show("Lỗi load bảng: " + ex.Message); 
+        MessageBox.Show("Lỗi load đối tượng: " + ex.Message); 
     }
 }
 
@@ -451,6 +484,40 @@ private void LoadColumnsToCombo(string tableName)
                             grid.DataSource = dt;
                         }
                     } catch (Exception ex) { MessageBox.Show("Lỗi load thông báo: " + ex.Message); }
+                }
+
+                // ============= TRANG XEM DỮ LIỆU (BV_ADMIN bypass VPD) =============
+                private Control CreateDataViewPage(string tableName, string sql)
+                {
+                    Panel p = new Panel();
+                    string shortName = tableName.Contains(".") ? tableName.Split('.')[1] : tableName;
+                    Panel card = CreateStyledCard($"DỮ LIỆU BẢNG: {shortName}", Color.White, 100);
+
+                    Label lblCount = new Label {
+                        Text = "", Location = new Point(30, 55), AutoSize = true,
+                        Font = new Font("Segoe UI", 10), ForeColor = Color.DimGray
+                    };
+                    card.Controls.Add(lblCount);
+
+                    AddBtn(card, "🔄 LÀM MỚI", Color.DimGray, 650, 50, (s, e) => LoadDataView(sql, lblCount));
+
+                    InitGridInPage(p, card, 10);
+                    LoadDataView(sql, lblCount);
+                    return p;
+                }
+
+                private void LoadDataView(string sql, Label lblCount)
+                {
+                    try {
+                        using (var conn = db.GetConnection(currentUser, currentPass)) {
+                            conn.Open();
+                            var da = new OracleDataAdapter(sql, conn);
+                            DataTable dt = new DataTable();
+                            da.Fill(dt);
+                            grid.DataSource = dt;
+                            lblCount.Text = $"Tổng số dòng: {dt.Rows.Count}";
+                        }
+                    } catch (Exception ex) { MessageBox.Show("Lỗi load dữ liệu: " + ex.Message); }
                 }
 
                 #endregion
@@ -751,9 +818,20 @@ private void Revoke(object s, EventArgs e)
  private string BuildGrantSql(string target)
 {
     string privilege = cbPrivilege.Text;
-    string obj = cbObject.Text.ToUpper();
+    string rawObj = cbObject.Text;
     string col = (cbColumn.SelectedItem != null && cbColumn.Text != "(Tất cả cột)") ? cbColumn.Text.Trim() : "";
     string grantOpt = chkGrant.Checked ? " WITH GRANT OPTION" : "";
+
+    // Xử lý prefix [VIEW], [PROCEDURE], [FUNCTION], [PACKAGE]
+    string obj;
+    if (rawObj.Contains("] ")) {
+        obj = "BVOWNER." + rawObj.Substring(rawObj.IndexOf("] ") + 2);
+        // Procedure/Function/Package chỉ dùng EXECUTE
+        if (rawObj.StartsWith("[PROCEDURE") || rawObj.StartsWith("[FUNCTION") || rawObj.StartsWith("[PACKAGE"))
+            return $"GRANT EXECUTE ON {obj} TO {target}{grantOpt}";
+    } else {
+        obj = "BVOWNER." + rawObj;
+    }
 
     if ((privilege == "SELECT" || privilege == "UPDATE") && col != "")
         return $"GRANT {privilege} ({col}) ON {obj} TO {target}{grantOpt}";
@@ -774,7 +852,18 @@ void LoadPrivileges(object s, EventArgs e)
         conn.Open();
 
         string sql = $@"
-        SELECT * FROM DBA_TAB_PRIVS WHERE GRANTEE = '{name}'
+        SELECT 'OBJECT' AS LOAI, PRIVILEGE, OWNER||'.'||TABLE_NAME AS DOI_TUONG, GRANTABLE, NULL AS COT
+        FROM DBA_TAB_PRIVS WHERE GRANTEE = '{name}'
+        UNION ALL
+        SELECT 'COLUMN' AS LOAI, PRIVILEGE, OWNER||'.'||TABLE_NAME AS DOI_TUONG, GRANTABLE, COLUMN_NAME AS COT
+        FROM DBA_COL_PRIVS WHERE GRANTEE = '{name}'
+        UNION ALL
+        SELECT 'SYSTEM' AS LOAI, PRIVILEGE, NULL AS DOI_TUONG, ADMIN_OPTION AS GRANTABLE, NULL AS COT
+        FROM DBA_SYS_PRIVS WHERE GRANTEE = '{name}'
+        UNION ALL
+        SELECT 'ROLE' AS LOAI, GRANTED_ROLE AS PRIVILEGE, NULL AS DOI_TUONG, ADMIN_OPTION AS GRANTABLE, NULL AS COT
+        FROM DBA_ROLE_PRIVS WHERE GRANTEE = '{name}'
+        ORDER BY 1, 2
         ";
 
         var da = new OracleDataAdapter(sql, conn);

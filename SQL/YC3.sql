@@ -2,7 +2,7 @@
 -- YC3.sql - Yeu cau 3: Kiem toan
 -- =========================================================================
 
-CONNECT BV_ADMIN/"BvAdmin@2026!"@localhost:1521/XEPDB1
+CONNECT BVOWNER/BVOwner#2026@localhost:1521/XEPDB1
 
 -- Dung script co the chay lap: noaudit/drop truoc khi create lai
 BEGIN EXECUTE IMMEDIATE 'NOAUDIT POLICY AUD_POL_SESSION'; EXCEPTION WHEN OTHERS THEN NULL; END;
