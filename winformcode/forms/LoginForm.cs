@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms; // Thư viện quan trọng cho giao diện
 using Oracle.ManagedDataAccess.Client;
@@ -21,6 +22,7 @@ namespace HospitalApp.Forms
         private System.Windows.Forms.Timer animTimer; 
         private float tick = 0;
         private bool isPassVisible = false;
+        private readonly string rememberFilePath;
 
         public LoginForm()
         {
@@ -33,8 +35,10 @@ namespace HospitalApp.Forms
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(10, 15, 28);
+            rememberFilePath = Path.Combine(Application.UserAppDataPath, "remembered_user.txt");
 
             InitUI();
+            LoadRememberedUser();
             StartAnimations();
         }
 
@@ -69,8 +73,8 @@ namespace HospitalApp.Forms
             // --- PHẦN PASSWORD (Có con mắt) ---
             CreateHeaderLabel("Password", 280);
             txtPass = CreateInputBox("🔒 Enter Password", 320);
-            txtPass.PasswordChar = '●';
             txtPass.Width = 310; // Thu ngắn một chút để đặt nút con mắt
+            SetPasswordPlaceholderState(true);
 
             btnShowPass = new Button {
                 Text = "👁", // Biểu tượng con mắt
@@ -136,14 +140,35 @@ namespace HospitalApp.Forms
                 BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.Gray,
                 BorderStyle = BorderStyle.FixedSingle, Text = placeholder
             };
-            txt.Enter += (s, e) => { if (txt.Text == placeholder) { txt.Text = ""; txt.ForeColor = Color.White; } };
-            txt.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txt.Text)) { txt.Text = placeholder; txt.ForeColor = Color.Gray; } };
+            txt.Enter += (s, e) => {
+                if (txt.Text == placeholder) {
+                    txt.Text = "";
+                    txt.ForeColor = Color.White;
+                    if (txt == txtPass) {
+                        SetPasswordPlaceholderState(false);
+                    }
+                }
+            };
+            txt.Leave += (s, e) => {
+                if (string.IsNullOrWhiteSpace(txt.Text)) {
+                    txt.Text = placeholder;
+                    txt.ForeColor = Color.Gray;
+                    if (txt == txtPass) {
+                        SetPasswordPlaceholderState(true);
+                    }
+                }
+            };
             card.Controls.Add(txt);
             return txt;
         }
 
         // Logic ẩn/hiện mật khẩu
         private void TogglePasswordVisibility(object sender, EventArgs e) {
+            if (txtPass.Text == "🔒 Enter Password")
+            {
+                return;
+            }
+
             isPassVisible = !isPassVisible;
             if (isPassVisible) {
                 txtPass.PasswordChar = '\0'; // Hiện chữ
@@ -180,6 +205,7 @@ namespace HospitalApp.Forms
                 DBConnection db = new DBConnection();
                 using (OracleConnection conn = db.GetConnection(user, pass)) { conn.Open(); }
                 lblError.Text = "";
+                SaveRememberedUser(user);
                 if (upperUser == "BVOWNER") { new FormAdmin(user, pass).Show(); }
                 else { new FormUser(user, pass).Show(); }
                 this.Hide();
@@ -226,6 +252,56 @@ namespace HospitalApp.Forms
         private void CenterCard() {
             card.Location = new Point((bg.Width - card.Width) / 2, (bg.Height - card.Height) / 2);
             ApplyRegion(card, 40);
+        }
+
+        private void LoadRememberedUser()
+        {
+            try
+            {
+                if (!File.Exists(rememberFilePath))
+                {
+                    return;
+                }
+
+                string rememberedUser = File.ReadAllText(rememberFilePath).Trim();
+                if (!string.IsNullOrWhiteSpace(rememberedUser))
+                {
+                    txtUser.Text = rememberedUser;
+                    txtUser.ForeColor = Color.White;
+                    chkRemember.Checked = true;
+                    txtPass.Focus();
+                }
+            }
+            catch
+            {
+                chkRemember.Checked = false;
+            }
+        }
+
+        private void SaveRememberedUser(string username)
+        {
+            try
+            {
+                if (chkRemember.Checked)
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(rememberFilePath));
+                    File.WriteAllText(rememberFilePath, username);
+                }
+                else if (File.Exists(rememberFilePath))
+                {
+                    File.Delete(rememberFilePath);
+                }
+            }
+            catch
+            {
+                // Khong chan dang nhap neu luu username that bai
+            }
+        }
+
+        private void SetPasswordPlaceholderState(bool isPlaceholder)
+        {
+            txtPass.PasswordChar = isPlaceholder || isPassVisible ? '\0' : '●';
+            txtPass.ForeColor = isPlaceholder ? Color.Gray : Color.White;
         }
 
         private void ApplyRegion(Control c, int r) {

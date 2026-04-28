@@ -3,6 +3,7 @@
         using System.Drawing;
         using System.Windows.Forms;
         using Oracle.ManagedDataAccess.Client;
+        using HospitalApp.Forms;
         using HospitalApp.Services;
         
 
@@ -152,7 +153,11 @@
     var btnNotice = CreateMenuBtn("📢  Thông báo (OLS)", () => LoadPage(CreateNoticePage(), "Quản lý Thông báo (OLS)"));
 
     // 7. ĐĂNG XUẤT
-    var btnLogout = CreateMenuBtn("🚪  ĐĂNG XUẤT", () => this.Close());
+    var btnLogout = CreateMenuBtn("🚪  ĐĂNG XUẤT", () => {
+        this.Hide();
+        LoginForm login = new LoginForm();
+        login.Show();
+    });
     btnLogout.ForeColor = Color.Salmon;
 
     // 8. ADD VÀO SIDEBAR (Thứ tự hiển thị từ trên xuống - Dock=Top nên add ngược)
@@ -197,6 +202,7 @@
     txtUser = AddInput(card, "Tên đăng nhập", 30, 75);
     txtPass = AddInput(card, "Mật khẩu mới", 260, 75, true);
     txtSearchUser = AddInput(card, "🔍 Tìm kiếm nhanh", 490, 75);
+    txtSearchUser.TextChanged += (s, e) => FilterUsers();
 
     // Các nút chức năng được sắp xếp sát nhau, không để khoảng cách thừa
     AddBtn(card, "🔧 ĐỔI PASS", clrPrimary, 30, 125, AlterUser);
@@ -213,9 +219,7 @@ private Control CreateViewPrivPage()
     Panel card = CreateStyledCard("TRA CỨU QUYỀN HỆ THỐNG", Color.White, 150);
 
     txtSearchUser = AddInput(card, "Nhập User/Role cần xem", 30, 75);
-    AddBtn(card, "🔍 KIỂM TRA", clrPrimary, 260, 75, (s, e) => {
-         // Logic gọi query hiển thị quyền của user vào Grid
-    });
+    AddBtn(card, "🔍 KIỂM TRA", clrPrimary, 260, 75, SearchPrivilegeDetails);
 
     InitGridInPage(p, card, 20);
     return p;
@@ -394,6 +398,25 @@ private void LoadColumnsToCombo(string tableName)
     catch (Exception ex) { MessageBox.Show("Lỗi load cột: " + ex.Message); }
 }
 
+private void FilterUsers()
+{
+    if (userTable == null || txtSearchUser == null)
+    {
+        return;
+    }
+
+    string keyword = txtSearchUser.Text.Trim().Replace("'", "''").ToUpper();
+
+    if (string.IsNullOrEmpty(keyword))
+    {
+        userTable.DefaultView.RowFilter = "";
+        return;
+    }
+
+    userTable.DefaultView.RowFilter =
+        $"USERNAME LIKE '%{keyword}%' OR ACCOUNT_STATUS LIKE '%{keyword}%'";
+}
+
                 // ============= TRANG THÔNG BÁO (OLS) =============
                 private Control CreateNoticePage()
                 {
@@ -532,6 +555,7 @@ private void LoadColumnsToCombo(string tableName)
                             userTable = new DataTable();
                             da.Fill(userTable);
                             grid.DataSource = userTable;
+                            FilterUsers();
                         }
                     } catch (Exception ex) { MessageBox.Show(ex.Message); }
                 }
@@ -872,6 +896,78 @@ void LoadPrivileges(object s, EventArgs e)
         grid.DataSource = dt;
     }
 }
+                private void SearchPrivilegeDetails(object s, EventArgs e)
+                {
+                    Button triggerButton = s as Button;
+                    string name = txtSearchUser.Text.Trim().ToUpper();
+
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        MessageBox.Show("Nhập User hoặc Role cần xem!");
+                        return;
+                    }
+
+                    DataTable loadingTable = new DataTable();
+                    loadingTable.Columns.Add("TRANGTHAI");
+                    loadingTable.Rows.Add("Đang truy xuất quyền, vui lòng chờ...");
+                    grid.DataSource = loadingTable;
+
+                    if (triggerButton != null)
+                    {
+                        triggerButton.Enabled = false;
+                        triggerButton.Text = "ĐANG KIỂM TRA...";
+                    }
+
+                    Cursor previousCursor = this.Cursor;
+                    this.Cursor = Cursors.WaitCursor;
+                    Application.DoEvents();
+
+                    try
+                    {
+                        using (var conn = db.GetConnection(currentUser, currentPass))
+                        {
+                            conn.Open();
+
+                            string sql = $@"
+        SELECT GRANTEE, OWNER, TABLE_NAME, PRIVILEGE, GRANTABLE, 'DIRECT' AS SOURCE_ROLE
+        FROM DBA_TAB_PRIVS
+        WHERE GRANTEE = '{name}'
+
+        UNION ALL
+
+        SELECT RP.GRANTEE, TP.OWNER, TP.TABLE_NAME, TP.PRIVILEGE, TP.GRANTABLE, RP.GRANTED_ROLE AS SOURCE_ROLE
+        FROM DBA_ROLE_PRIVS RP
+        JOIN DBA_TAB_PRIVS TP ON RP.GRANTED_ROLE = TP.GRANTEE
+        WHERE RP.GRANTEE = '{name}'
+
+        ORDER BY TABLE_NAME, PRIVILEGE";
+
+                            var da = new OracleDataAdapter(sql, conn);
+                            DataTable dt = new DataTable();
+                            da.Fill(dt);
+                            grid.DataSource = dt;
+
+                            if (dt.Rows.Count == 0)
+                            {
+                                MessageBox.Show("Không tìm thấy quyền nào cho User/Role này!");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Lỗi khi tra cứu quyền: " + ex.Message);
+                    }
+                    finally
+                    {
+                        this.Cursor = previousCursor;
+
+                        if (triggerButton != null)
+                        {
+                            triggerButton.Enabled = true;
+                            triggerButton.Text = "🔍 KIỂM TRA";
+                        }
+                    }
+                }
                 private void LoadPage(Control page, string title)
                 {
                     contentPanel.Controls.Clear();
