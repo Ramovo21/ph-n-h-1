@@ -10,7 +10,7 @@ namespace HospitalApp.Services
 
             builder.UserID = user;
             builder.Password = pass;
-            builder.DataSource = "localhost:1521/xepdb1";
+            builder.DataSource = "localhost:1521/orclpdb";
 
             // 👉 FIX SYS LOGIN
             if (user.ToUpper() == "SYS")

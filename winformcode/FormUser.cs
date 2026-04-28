@@ -102,8 +102,6 @@ string currentPass;
         this.Controls.Add(btnPanel);
         this.Controls.Add(lblUser);
         this.Controls.Add(header);
-
-        grid.BringToFront();
     }
 
     // ================= BUTTON STYLE =================

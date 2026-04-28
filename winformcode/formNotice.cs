@@ -27,78 +27,123 @@ string user, pass;
     // ===== UI =====
     void BuildUI()
     {
-        Panel header = new Panel();
-        header.Dock = DockStyle.Top;
-        header.Height = 80;
-        header.BackColor = Color.FromArgb(45, 90, 180);
+        this.Controls.Clear();
 
-        Label title = new Label();
-        title.Text = "THÔNG BÁO BỆNH VIỆN (OLS)";
-        title.Font = new Font("Segoe UI", 22, FontStyle.Bold);
-        title.ForeColor = Color.White;
-        title.Dock = DockStyle.Fill;
-        title.TextAlign = ContentAlignment.MiddleCenter;
+        TableLayoutPanel root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            BackColor = Color.FromArgb(244, 246, 249)
+        };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
+        Panel header = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.FromArgb(45, 90, 180)
+        };
+
+        Label title = new Label
+        {
+            Text = "THÔNG BÁO BỆNH VIỆN (OLS)",
+            Font = new Font("Segoe UI", 22, FontStyle.Bold),
+            ForeColor = Color.White,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter
+        };
         header.Controls.Add(title);
 
-        Label lblUser = new Label();
-        lblUser.Text = "User: " + user;
-        lblUser.ForeColor = Color.White;
-        lblUser.Font = new Font("Segoe UI", 12, FontStyle.Bold);
-        lblUser.Dock = DockStyle.Top;
-        lblUser.Height = 35;
-        lblUser.TextAlign = ContentAlignment.MiddleCenter;
+        Panel toolbar = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            Padding = new Padding(24, 14, 24, 12)
+        };
 
-        Panel btnPanel = new Panel();
-        btnPanel.Dock = DockStyle.Top;
-        btnPanel.Height = 60;
+        Label lblUser = new Label
+        {
+            Text = "User: " + user,
+            ForeColor = Color.FromArgb(33, 37, 41),
+            Font = new Font("Segoe UI", 11, FontStyle.Bold),
+            Dock = DockStyle.Left,
+            Width = 420,
+            TextAlign = ContentAlignment.MiddleLeft
+        };
 
-        Button btnReload = CreateButton("Reload", Color.DodgerBlue);
-        btnReload.Left = 20;
-        btnReload.Top = 10;
+        FlowLayoutPanel actions = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Right,
+            Width = 290,
+            FlowDirection = FlowDirection.RightToLeft,
+            WrapContents = false,
+            BackColor = Color.Transparent
+        };
+
+        Button btnReload = CreateButton("Làm mới", Color.DodgerBlue);
         btnReload.Click += (s, e) => LoadData();
 
         Button btnClose = CreateButton("Đóng", Color.IndianRed);
-        btnClose.Left = 160;
-        btnClose.Top = 10;
         btnClose.Click += (s, e) => this.Close();
 
-        btnPanel.Controls.Add(btnReload);
-        btnPanel.Controls.Add(btnClose);
+        actions.Controls.Add(btnClose);
+        actions.Controls.Add(btnReload);
+        toolbar.Controls.Add(actions);
+        toolbar.Controls.Add(lblUser);
 
-        grid = new DataGridView();
-        grid.Dock = DockStyle.Fill;
-        grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        grid.RowHeadersVisible = false;
-        grid.BackgroundColor = Color.White;
+        Panel gridPanel = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = root.BackColor,
+            Padding = new Padding(24, 0, 24, 24)
+        };
 
-        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.Navy;
+        grid = new DataGridView
+        {
+            Dock = DockStyle.Fill,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+            RowHeadersVisible = false,
+            BackgroundColor = Color.White,
+            BorderStyle = BorderStyle.None,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            AllowUserToAddRows = false,
+            EnableHeadersVisualStyles = false
+        };
+
+        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(33, 37, 41);
         grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
         grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 12, FontStyle.Bold);
-        grid.EnableHeadersVisualStyles = false;
+        grid.ColumnHeadersHeight = 42;
 
         grid.DefaultCellStyle.Font = new Font("Segoe UI", 11);
-        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.LightGray;
+        grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(41, 128, 185);
+        grid.DefaultCellStyle.SelectionForeColor = Color.White;
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(242, 245, 249);
 
-        this.Controls.Add(grid);
-        this.Controls.Add(btnPanel);
-        this.Controls.Add(lblUser);
-        this.Controls.Add(header);
+        gridPanel.Controls.Add(grid);
 
-        grid.BringToFront();
+        root.Controls.Add(header, 0, 0);
+        root.Controls.Add(toolbar, 0, 1);
+        root.Controls.Add(gridPanel, 0, 2);
+        this.Controls.Add(root);
     }
 
     Button CreateButton(string text, Color color)
     {
         Button btn = new Button();
         btn.Text = text;
-        btn.Width = 120;
+        btn.Width = 124;
         btn.Height = 40;
         btn.BackColor = color;
         btn.ForeColor = Color.White;
+        btn.Font = new Font("Segoe UI", 9, FontStyle.Bold);
 
         btn.FlatStyle = FlatStyle.Flat;
         btn.FlatAppearance.BorderSize = 0;
+        btn.Margin = new Padding(8, 0, 0, 0);
 
         btn.MouseEnter += (s, e) => btn.BackColor = ControlPaint.Light(color);
         btn.MouseLeave += (s, e) => btn.BackColor = color;
