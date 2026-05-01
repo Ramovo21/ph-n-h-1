@@ -108,18 +108,17 @@ SELECT 'DONTHUOC', COUNT(*) FROM DONTHUOC;
 
 -- Buoc 5: Phuc hoi tu backup
 -- Tim ten file backup moi nhat trong backup log
-SELECT FILE_NAME
+SELECT TO_CHAR(BAK_TIME, 'DD-MON-YYYY HH24:MI:SS') AS THOI_GIAN,  FILE_NAME
 FROM BACKUP_LOG
 WHERE BAK_TYPE = 'AUTO_EXPORT'
   AND STATUS = 'DONE'
-ORDER BY BAK_ID DESC
-FETCH FIRST 1 ROW ONLY;
+ORDER BY BAK_TIME DESC;
 
 -- Goi procedure phuc hoi (thay ten file bang file thuc te tu thu muc C:\oracle_backup)
 -- Vi du: bvowner_20260331_113705.dmp
 -- Luu y: thay ten file dung voi file backup cua ban
 BEGIN
-    PROC_IMPORT_RESTORE('BVOWNER_20260501_145258.DMP');  -- <-- THAY TEN FILE THUC TE
+    PROC_IMPORT_RESTORE('bvowner_20260501_150404.dmp');  -- <-- THAY TEN FILE THUC TE
 END;
 /
 
@@ -135,7 +134,7 @@ SELECT 'DONTHUOC', COUNT(*) FROM DONTHUOC;
 
 -- Kiem tra backup log ghi nhan ca export va import
 SELECT BAK_ID, 
-       TO_CHAR(BAK_TIME, 'HH24:MI:SS') AS GIO, 
+       TO_CHAR(BAK_TIME, 'DD-MM-YYYY HH24:MI:SS') AS THOI_GIAN, 
        BAK_TYPE, 
        STATUS
 FROM BACKUP_LOG
@@ -245,15 +244,15 @@ SELECT TO_CHAR(event_timestamp, 'DD-MON-YY HH24:MI:SS') AS THOI_GIAN,
        object_name,
        unified_audit_policies
 FROM unified_audit_trail
-WHERE object_name = 'BVOWNER.DONTHUOC'
+WHERE object_name = 'DONTHUOC'
   AND action_name = 'DELETE'
 ORDER BY event_timestamp DESC;
 
 -- =======================================================================
 -- Buoc 4: Flashback Table
 -- =======================================================================
-FLASHBACK TABLE BVOWNER.DONTHUOC
-TO TIMESTAMP TIMESTAMP '2026-05-01 15:07:00';
+FLASHBACK TABLE DONTHUOC
+TO TIMESTAMP TIMESTAMP '2026-05-01 23:10:00';
 COMMIT;
 
 -- =======================================================================
@@ -263,8 +262,6 @@ SELECT COUNT(*) FROM BVOWNER.DONTHUOC;
 -- Mong doi: du lieu duoc khoi phuc lai day du
 
 SELECT * FROM BVOWNER.DONTHUOC;
-
-
 
 
 
