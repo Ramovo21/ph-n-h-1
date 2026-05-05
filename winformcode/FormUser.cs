@@ -86,21 +86,9 @@ string currentPass;
             f.Show();
         };
 
-        // (Optional) Quay lại Login riêng
-        Button btnBack = CreateButton("Back Login", Color.Gray);
-        btnBack.Left = 580;
-        btnBack.Top = 10;
-        btnBack.Click += (s, e) =>
-        {
-            this.Hide();
-            LoginForm login = new LoginForm();
-            login.Show();
-        };
-
         btnPanel.Controls.Add(btnReload);
         btnPanel.Controls.Add(btnLogout);
         btnPanel.Controls.Add(btnOLS);
-        btnPanel.Controls.Add(btnBack);
 
         // ===== GRID =====
         grid = new DataGridView();
@@ -114,8 +102,6 @@ string currentPass;
         this.Controls.Add(btnPanel);
         this.Controls.Add(lblUser);
         this.Controls.Add(header);
-
-        grid.BringToFront();
     }
 
     // ================= BUTTON STYLE =================
