@@ -9,7 +9,7 @@ namespace HospitalApp
 {
 public class formNotice : Form
 {
-DataGridView grid;
+DataGridView grid = null!;
 string user, pass;
     public formNotice(string u, string p)
     {

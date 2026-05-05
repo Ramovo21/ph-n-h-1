@@ -1,4 +1,5 @@
 using Oracle.ManagedDataAccess.Client;
+using System;
 
 namespace HospitalApp.Services
 {
@@ -10,7 +11,9 @@ namespace HospitalApp.Services
 
             builder.UserID = user;
             builder.Password = pass;
-            builder.DataSource = "localhost:1521/xepdb1";
+            builder.DataSource =
+                Environment.GetEnvironmentVariable("HOSPITALAPP_ORACLE_DATASOURCE")
+                ?? "localhost:1521/XEPDB1";
 
             // 👉 FIX SYS LOGIN
             if (user.ToUpper() == "SYS")

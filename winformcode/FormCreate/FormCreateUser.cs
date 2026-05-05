@@ -10,8 +10,12 @@ public class FormCreateUser : Form
     private Color accentColor = Color.FromArgb(0, 184, 148);
     private Color errorColor = Color.FromArgb(255, 118, 117);
 
-    private TextBox txtUser, txtPass, txtConfirm;
-    private Label lblErrUser, lblErrPass, lblErrConfirm;
+    private TextBox txtUser = null!;
+    private TextBox txtPass = null!;
+    private TextBox txtConfirm = null!;
+    private Label lblErrUser = null!;
+    private Label lblErrPass = null!;
+    private Label lblErrConfirm = null!;
 
     public string Username => txtUser.Text.Trim();
     public string Password => txtPass.Text;

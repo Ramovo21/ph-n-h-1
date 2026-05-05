@@ -11,14 +11,18 @@ namespace HospitalApp.Forms
     public class LoginForm : Form
     {
         // Khai báo các thành phần giao diện
-        private TextBox txtUser, txtPass;
-        private Button btnLogin, btnShowPass;
-        private CheckBox chkRemember;
-        private Label lblError, lblTitle;
-        private Panel bg, card;
-        
+        private TextBox txtUser = null!;
+        private TextBox txtPass = null!;
+        private Button btnLogin = null!;
+        private Button btnShowPass = null!;
+        private CheckBox chkRemember = null!;
+        private Label lblError = null!;
+        private Label lblTitle = null!;
+        private Panel bg = null!;
+        private Panel card = null!;
+
         // Sử dụng đầy đủ tên namespace để tránh lỗi "Ambiguous reference" cho Timer
-        private System.Windows.Forms.Timer animTimer; 
+        private System.Windows.Forms.Timer animTimer = null!;
         private float tick = 0;
         private bool isPassVisible = false;
 
@@ -66,11 +70,11 @@ namespace HospitalApp.Forms
             CreateHeaderLabel("Username", 150);
             txtUser = CreateInputBox("👤 Enter Username", 190);
 
-            // --- PHẦN PASSWORD (Có con mắt) ---
+            // --- PHẦN PASSWORD ---
             CreateHeaderLabel("Password", 280);
             txtPass = CreateInputBox("🔒 Enter Password", 320);
             txtPass.PasswordChar = '●';
-            txtPass.Width = 310; // Thu ngắn một chút để đặt nút con mắt
+            txtPass.Width = 310; 
 
             btnShowPass = new Button {
                 Text = "👁", // Biểu tượng con mắt
@@ -143,7 +147,7 @@ namespace HospitalApp.Forms
         }
 
         // Logic ẩn/hiện mật khẩu
-        private void TogglePasswordVisibility(object sender, EventArgs e) {
+        private void TogglePasswordVisibility(object? sender, EventArgs e) {
             isPassVisible = !isPassVisible;
             if (isPassVisible) {
                 txtPass.PasswordChar = '\0'; // Hiện chữ
@@ -156,7 +160,7 @@ namespace HospitalApp.Forms
             }
         }
 
-        private void BtnLogin_Click(object sender, EventArgs e)
+        private void BtnLogin_Click(object? sender, EventArgs e)
         {
             string user = txtUser.Text.Trim();
             string pass = txtPass.Text.Trim();
@@ -197,7 +201,7 @@ namespace HospitalApp.Forms
             animTimer.Start();
         }
 
-        private void DrawCinematicBackground(object sender, PaintEventArgs e) {
+        private void DrawCinematicBackground(object? sender, PaintEventArgs e) {
             Graphics g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             using (LinearGradientBrush br = new LinearGradientBrush(bg.ClientRectangle, Color.FromArgb(10, 15, 28), Color.FromArgb(30, 50, 100), 45f))
                 g.FillRectangle(br, bg.ClientRectangle);

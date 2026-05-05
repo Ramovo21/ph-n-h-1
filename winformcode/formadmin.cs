@@ -12,26 +12,33 @@
             {
                 #region 1. BIẾN HỆ THỐNG & MÀU SẮC
                 
-                private DBConnection db = new DBConnection();
-                private string currentUser, currentPass;
-                private Panel contentPanel;
-                private Label lblHeaderTitle;
-                private DataGridView grid;
+                private readonly DBConnection db = new DBConnection();
+                private readonly string currentUser;
+                private readonly string currentPass;
+                private Panel contentPanel = null!;
+                private Label lblHeaderTitle = null!;
+                private DataGridView grid = null!;
 
-                private Panel pnlUserSubmenu;
+                private Panel pnlUserSubmenu = null!;
 
                 // Controls nhập liệu
-                private TextBox txtUser, txtPass, txtRole, txtSearchUser, txtSearchRole, txtObject, txtColumn;
-                private ComboBox cbPrivilege;
-                private ComboBox cbUser, cbRole;
-                private CheckBox chkGrant;
-                private DataTable userTable, roleTable;
+                private TextBox txtUser = null!;
+                private TextBox txtPass = null!;
+                private TextBox txtRole = null!;
+                private TextBox txtSearchUser = null!;
+                private TextBox txtSearchRole = null!;
+                private ComboBox cbPrivilege = null!;
+                private ComboBox cbUser = null!;
+                private ComboBox cbRole = null!;
+                private CheckBox chkGrant = null!;
+                private DataTable? userTable;
+                private DataTable? roleTable;
 
-                private Panel pnlRoleSubmenu;
+                private Panel pnlRoleSubmenu = null!;
 
-                private Panel pnlPrivSubmenu;
+                private Panel pnlPrivSubmenu = null!;
 
-                private Panel pnlDataSubmenu;
+                private Panel pnlDataSubmenu = null!;
 
                 // Bảng màu hiện đại
                 private readonly Color clrPrimary = Color.FromArgb(41, 128, 185);    // Blue (Dùng cho Header)
@@ -91,7 +98,7 @@
     // 2. MENU CON: CẤU HÌNH USER (Quản lý, Tạo mới)
     pnlUserSubmenu = new Panel { Dock = DockStyle.Top, Height = 0, Visible = false, BackColor = Color.FromArgb(45, 50, 55) };
     var btnAllUsers = CreateSubMenuBtn("  ›  Quản lý user", () => LoadPage(CreateUserPage(), "Quản lý Người dùng"));
-    var btnCreateUser = CreateSubMenuBtn("  ›  Tạo user mới", () => CreateUser(null, null));
+    var btnCreateUser = CreateSubMenuBtn("  ›  Tạo user mới", () => CreateUser(this, EventArgs.Empty));
     pnlUserSubmenu.Controls.Add(btnCreateUser);
     pnlUserSubmenu.Controls.Add(btnAllUsers);
     pnlUserSubmenu.Height = pnlUserSubmenu.Controls.Count * 45;
@@ -103,7 +110,7 @@
     // 3. MENU CON: VAI TRÒ (Quản lý, Tạo mới)
     pnlRoleSubmenu = new Panel { Dock = DockStyle.Top, Height = 0, Visible = false, BackColor = Color.FromArgb(45, 50, 55) };
     var btnAllRoles = CreateSubMenuBtn("  ›  Quản lý role", () => LoadPage(CreateRolePage(), "Quản lý Vai trò"));
-    var btnCreateRole = CreateSubMenuBtn("  ›  Tạo role mới", () => CreateRole(null, null));
+    var btnCreateRole = CreateSubMenuBtn("  ›  Tạo role mới", () => CreateRole(this, EventArgs.Empty));
     pnlRoleSubmenu.Controls.Add(btnCreateRole);
     pnlRoleSubmenu.Controls.Add(btnAllRoles);
     pnlRoleSubmenu.Height = pnlRoleSubmenu.Controls.Count * 45;
@@ -240,7 +247,8 @@ private Control CreateViewPrivPage()
     LoadRoles();
     return p;
 }
-private ComboBox cbObject, cbColumn;
+private ComboBox cbObject = null!;
+private ComboBox cbColumn = null!;
 private Control CreatePrivPage()
 {
     Panel p = new Panel();
@@ -599,7 +607,7 @@ private Control CreateRevokePage()
 
     return p;
 }
-private void DropUser(object s, EventArgs e)
+private void DropUser(object? s, EventArgs e)
 {
     if (string.IsNullOrWhiteSpace(txtUser.Text))
     {
@@ -641,7 +649,7 @@ private void DropUser(object s, EventArgs e)
                     } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi SQL"); return false; }
                 }
 
-               private void CreateUser(object s, EventArgs e)
+               private void CreateUser(object? s, EventArgs e)
 {
     using (FormCreateUser f = new FormCreateUser())
     {
@@ -655,7 +663,7 @@ private void DropUser(object s, EventArgs e)
         }
     }
 }
-private void AlterUser(object s, EventArgs e)
+private void AlterUser(object? s, EventArgs e)
 {
     if (string.IsNullOrWhiteSpace(txtUser.Text))
     {
@@ -673,7 +681,7 @@ private void AlterUser(object s, EventArgs e)
     }
 }
     
-private void CreateRole(object s, EventArgs e)
+private void CreateRole(object? s, EventArgs e)
 
 {
     using (FormCreateRole f = new FormCreateRole())
@@ -686,7 +694,7 @@ private void CreateRole(object s, EventArgs e)
     }
 }
 
-private void DropRole(object s, EventArgs e)
+private void DropRole(object? s, EventArgs e)
 {
     if (string.IsNullOrWhiteSpace(txtRole.Text))
     {
@@ -734,19 +742,21 @@ private void LoadRoleToCombo()
             cbRole.Items.Add(reader.GetString(0));
     }
 }
-      private string GetTarget()
+      private string? GetTarget()
 {
-    if (cbUser.SelectedItem != null)
-        return cbUser.SelectedItem.ToString().ToUpper();
+    var selectedUser = cbUser.SelectedItem;
+    if (selectedUser != null)
+        return selectedUser.ToString()?.ToUpperInvariant();
 
-    if (cbRole.SelectedItem != null)
-        return cbRole.SelectedItem.ToString().ToUpper();
+    var selectedRole = cbRole.SelectedItem;
+    if (selectedRole != null)
+        return selectedRole.ToString()?.ToUpperInvariant();
 
     MessageBox.Show("Chọn User hoặc Role!");
     return null;
 }
 
-private void GrantUser(object s, EventArgs e)
+private void GrantUser(object? s, EventArgs e)
 {
     if (cbUser.SelectedItem == null)
     {
@@ -760,10 +770,10 @@ private void GrantUser(object s, EventArgs e)
         return;
     }
 
-    ExecuteSql(BuildGrantSql(cbUser.SelectedItem.ToString()));
+    ExecuteSql(BuildGrantSql(cbUser.SelectedItem!.ToString()!));
 }
 
-private void GrantRole(object s, EventArgs e)
+private void GrantRole(object? s, EventArgs e)
 {
     if (cbRole.SelectedItem == null)
     {
@@ -777,10 +787,10 @@ private void GrantRole(object s, EventArgs e)
         return;
     }
 
-    ExecuteSql(BuildGrantSql(cbRole.SelectedItem.ToString()));
+    ExecuteSql(BuildGrantSql(cbRole.SelectedItem!.ToString()!));
 }
 
-private void GrantRoleToUser(object s, EventArgs e)
+private void GrantRoleToUser(object? s, EventArgs e)
 {
     if (cbUser.SelectedItem == null || cbRole.SelectedItem == null)
     {
@@ -791,9 +801,9 @@ private void GrantRoleToUser(object s, EventArgs e)
     ExecuteSql($"GRANT {cbRole.SelectedItem} TO {cbUser.SelectedItem}");
 }
 
-private void Revoke(object s, EventArgs e)
+private void Revoke(object? s, EventArgs e)
 {
-    string target = GetTarget();
+    string? target = GetTarget();
     if (target == null) return;
 
     if (cbObject.SelectedItem == null)
@@ -842,9 +852,9 @@ private void Revoke(object s, EventArgs e)
                 #endregion
 
                 #region 6. HELPERS (UI)
-void LoadPrivileges(object s, EventArgs e)
+void LoadPrivileges(object? s, EventArgs e)
 {
-    string name = GetTarget();
+    string? name = GetTarget();
     if (name == null) return;
 
     using (var conn = db.GetConnection(currentUser, currentPass))
@@ -887,7 +897,7 @@ void LoadPrivileges(object s, EventArgs e)
                     return card;
                 }
 
-                  private void Grid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+                  private void Grid_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
 {
     if (e.RowIndex < 0) return;
 
@@ -896,7 +906,7 @@ void LoadPrivileges(object s, EventArgs e)
     // 👉 USER
     if (lblHeaderTitle.Text.Contains("NGƯỜI DÙNG"))
     {
-        txtUser.Text = row.Cells["USERNAME"].Value.ToString();
+        txtUser.Text = Convert.ToString(row.Cells["USERNAME"].Value) ?? "";
         txtPass.Text = "";
         txtPass.Focus();
     }
@@ -904,7 +914,7 @@ void LoadPrivileges(object s, EventArgs e)
     // 👉 ROLE
     if (lblHeaderTitle.Text.Contains("VAI TRÒ"))
     {
-        txtRole.Text = row.Cells["ROLE"].Value.ToString();
+        txtRole.Text = Convert.ToString(row.Cells["ROLE"].Value) ?? "";
     }
 }   
   private void InitGridInPage(Panel container, Control card, int topMargin = 50)
@@ -934,7 +944,9 @@ void LoadPrivileges(object s, EventArgs e)
                     };
                     b.FlatAppearance.BorderSize = 0;
                     b.Click += (s, e) => {
-                        foreach (Control c in b.Parent.Controls) if (c is Button btn) btn.BackColor = Color.Transparent;
+                        var parent = b.Parent;
+                        if (parent != null)
+                            foreach (Control c in parent.Controls) if (c is Button btn) btn.BackColor = Color.Transparent;
                         b.BackColor = Color.FromArgb(50, 55, 60);
                         action();
                     };

@@ -10,7 +10,7 @@ namespace HospitalApp
 {
 public class FormUser : Form
 {
-DataGridView grid;
+DataGridView grid = null!;
 string currentUser;
 string currentPass;
 
