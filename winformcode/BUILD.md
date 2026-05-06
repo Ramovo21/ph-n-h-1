@@ -36,6 +36,10 @@ Kết quả build sẽ nằm ở:
 - `bin/Debug/net8.0-windows/`
 - `bin/Release/net8.0-windows/`
 
+> Lưu ý quan trọng:
+> - `dotnet build` sẽ tạo ra file `HospitalApp.exe` trong `bin/...` nhưng đây là output để **dev/test trên máy có .NET** (thường vẫn cần đủ các file đi kèm trong thư mục build).
+> - Muốn có `.exe` để **mang đi máy khác chạy** (đúng nghĩa “chạy bằng exe”), bạn cần `dotnet publish`.
+
 ## Run
 
 ```powershell
@@ -49,6 +53,12 @@ App sẽ mở form đăng nhập (`LoginForm`).
 
 ## Publish ra file `.exe` (để mang sang máy khác)
 
+### Cần sửa ở đâu để “chạy bằng exe” được?
+
+- Bạn **không cần sửa code** để có `.exe`. Chỉ cần chạy lệnh `dotnet publish` (bên dưới) là sẽ ra `HospitalApp.exe` trong thư mục `publish/`.
+- Nếu bạn muốn đổi **Oracle service mặc định** khi người dùng chưa set biến môi trường, sửa tại [Service/DBConnection.cs](Service/DBConnection.cs) (đoạn fallback đang là `localhost:1521/XEPDB1`).
+- (Tuỳ chọn) Nếu muốn “cố định” cấu hình publish (win-x64, self-contained, single-file) ngay trong project để khỏi gõ tham số, bạn có thể thêm các property vào `HospitalApp.csproj`.
+
 ### Cách 1: Self-contained (khuyến nghị để “máy khác chạy luôn”, không cần cài .NET)
 
 ```powershell
@@ -57,6 +67,12 @@ cd D:\DAC_BenhVien\ph-n-h-1\winformcode
 dotnet publish .\HospitalApp.csproj -c Release -r win-x64 \
   /p:PublishSingleFile=true \
   /p:SelfContained=true
+
+# (Tuỳ chọn) Nếu publish single-file mà chạy bị lỗi thiếu DLL/native,
+# thử thêm chế độ self-extract:
+# dotnet publish .\HospitalApp.csproj -c Release -r win-x64 \
+#   /p:PublishSingleFile=true /p:SelfContained=true \
+#   /p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
 File chạy sẽ nằm trong thư mục kiểu:
@@ -64,6 +80,13 @@ File chạy sẽ nằm trong thư mục kiểu:
 - `bin/Release/net8.0-windows/win-x64/publish/`
 
 Chỉ cần copy **cả thư mục `publish/`** sang máy khác và chạy `HospitalApp.exe`.
+
+Trên máy đích, có thể chạy trực tiếp:
+
+```powershell
+cd .\publish
+.\HospitalApp.exe
+```
 
 > Lưu ý: Nếu bạn đang mở app (`dotnet run`) mà build/publish báo lỗi kiểu “file is being used by another process”, hãy tắt app trước rồi build lại.
 > Có thể tắt nhanh bằng:
@@ -95,6 +118,21 @@ setx HOSPITALAPP_ORACLE_DATASOURCE "localhost:1521/XEPDB1"
 ```
 
 Sau khi setx, đóng/mở lại terminal (hoặc đăng xuất/đăng nhập Windows) để biến môi trường có hiệu lực.
+
+Nếu muốn “đóng gói” kèm cấu hình cho người dùng không cần setx, bạn có thể tạo file `run.bat` cạnh `HospitalApp.exe` (máy đích) với nội dung kiểu:
+
+```bat
+@echo off
+set HOSPITALAPP_ORACLE_DATASOURCE=localhost:1521/XEPDB1
+start "" "%~dp0HospitalApp.exe"
+```
+
+### Cách 3: Nhập trực tiếp trên màn hình đăng nhập (khuyến nghị)
+
+App có ô **Oracle DataSource** ngay trên `LoginForm`. Người dùng nhập 1 lần, nếu đăng nhập thành công thì app tự lưu và những lần sau tự dùng lại.
+
+- Vị trí lưu (Windows): `%AppData%\HospitalApp\datasource.txt`
+- Thứ tự ưu tiên: biến môi trường `HOSPITALAPP_ORACLE_DATASOURCE` (nếu có) sẽ override cấu hình đã lưu.
 
 ## Build bằng Visual Studio (tuỳ chọn)
 
