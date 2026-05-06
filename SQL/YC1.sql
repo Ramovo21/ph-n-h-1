@@ -37,9 +37,6 @@ CREATE OR REPLACE VIEW V_CURRENT_NHANVIEN AS
     SELECT * FROM NHANVIEN
     WHERE ORA_USERNAME = SYS_CONTEXT('USERENV','SESSION_USER');
 
-CREATE OR REPLACE VIEW V_CURRENT_BENHNHAN AS
-    SELECT * FROM BENHNHAN
-    WHERE ORA_USERNAME = SYS_CONTEXT('USERENV','SESSION_USER');
 
 CREATE OR REPLACE VIEW V_CURRENT_HSBA_DV_KTV AS
     SELECT D.*
@@ -51,9 +48,6 @@ CREATE OR REPLACE VIEW V_CURRENT_HSBA_DV_KTV AS
           AND ROWNUM = 1
     );
 
-CREATE OR REPLACE VIEW V_CURRENT_NHANVIEN_UPDATABLE AS
-    SELECT * FROM NHANVIEN
-    WHERE ORA_USERNAME = SYS_CONTEXT('USERENV','SESSION_USER');
 
 CREATE OR REPLACE TRIGGER TRG_UPDATE_BENHNHAN_VIEW
 INSTEAD OF UPDATE ON V_CURRENT_BENHNHAN
@@ -122,12 +116,10 @@ BEGIN EXECUTE IMMEDIATE 'REVOKE SELECT, UPDATE ON BVOWNER.HSBA_DV FROM ROLE_KTV'
 /
 GRANT SELECT ON BVOWNER.V_CURRENT_NHANVIEN TO ROLE_KTV;
 GRANT SELECT, UPDATE (KETQUA) ON BVOWNER.V_CURRENT_HSBA_DV_KTV TO ROLE_KTV;
-
 GRANT SELECT, UPDATE ON BVOWNER.V_CURRENT_BENHNHAN TO ROLE_BENHNHAN;
 GRANT SELECT, UPDATE ON BVOWNER.V_CURRENT_NHANVIEN_UPDATABLE TO ROLE_DIEUPHOI, ROLE_BACSI, ROLE_KTV;
 
--- Grant THONGBAO cho nhan vien (OLS se kiem soat dong nao duoc xem)
--- BVOWNER la chu bang nen khong can tu grant cho minh
+-- phân quyền cho các role
 GRANT SELECT ON BVOWNER.THONGBAO TO ROLE_DIEUPHOI, ROLE_BACSI, ROLE_KTV;
 
 GRANT ROLE_DIEUPHOI TO DPV_001,DPV_002,DPV_003,DPV_004,DPV_005,DPV_006,DPV_007,DPV_008,DPV_009,DPV_010,
@@ -138,121 +130,115 @@ GRANT ROLE_BENHNHAN TO BN_001,BN_002,BN_003,BN_004,BN_005,BN_006,BN_007,BN_008,B
 
 CONNECT BVOWNER/BVOwner#2026@localhost:1521/XEPDB1
 
+BEGIN DBMS_RLS.DROP_POLICY('BVOWNER','HSBA','POLICY_HSBA_VPD'); EXCEPTION WHEN OTHERS THEN NULL; END;
+/
 BEGIN DBMS_RLS.DROP_POLICY('BVOWNER','HSBA','POL_HSBA_ACCESS'); EXCEPTION WHEN OTHERS THEN NULL; END;
+/
+BEGIN DBMS_RLS.DROP_POLICY('BVOWNER','BENHNHAN','POLICY_BN_VPD'); EXCEPTION WHEN OTHERS THEN NULL; END;
 /
 BEGIN DBMS_RLS.DROP_POLICY('BVOWNER','BENHNHAN','POL_BN_BACSI'); EXCEPTION WHEN OTHERS THEN NULL; END;
 /
 BEGIN DBMS_RLS.DROP_POLICY('BVOWNER','DONTHUOC','POL_DT_BACSI'); EXCEPTION WHEN OTHERS THEN NULL; END;
 /
 
-CREATE OR REPLACE PACKAGE BV_VPD_PKG AS
-    FUNCTION get_manv_by_session RETURN VARCHAR2;
-    FUNCTION pol_hsba_access(p_schema VARCHAR2, p_obj VARCHAR2) RETURN VARCHAR2;
-    FUNCTION pol_benhnhan_by_bacsi(p_schema VARCHAR2, p_obj VARCHAR2) RETURN VARCHAR2;
-    FUNCTION pol_donthuoc_by_bacsi(p_schema VARCHAR2, p_obj VARCHAR2) RETURN VARCHAR2;
-END BV_VPD_PKG;
+CREATE OR REPLACE FUNCTION pol_hsba_func (
+    p_schema IN VARCHAR2,
+    p_obj    IN VARCHAR2
+) RETURN VARCHAR2 
+AS
+    v_user VARCHAR2(100);
+    v_manv VARCHAR2(20);
+BEGIN
+    -- Lấy tên user đang đăng nhập
+    v_user := SYS_CONTEXT('USERENV', 'SESSION_USER');
+
+    -- Điều phối viên: xem tất cả
+    IF DBMS_SESSION.IS_ROLE_ENABLED('ROLE_DIEUPHOI') OR v_user LIKE 'DPV\_%' ESCAPE '\' THEN
+        RETURN '1=1';
+    END IF;
+
+    -- Y sĩ/Bác sĩ: chỉ xem HSBA do mình phụ trách
+    IF DBMS_SESSION.IS_ROLE_ENABLED('ROLE_BACSI') OR v_user LIKE 'BS\_%' ESCAPE '\' THEN
+        BEGIN
+            SELECT MANV
+            INTO v_manv
+            FROM BVOWNER.NHANVIEN
+            WHERE ORA_USERNAME = v_user
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RETURN '1=2';
+        END;
+
+        -- HSBA.MABS lưu MANV (ví dụ: NV_BS_001)
+        RETURN 'MABS = ''' || v_manv || '''';
+    END IF;
+
+    -- Các trường hợp khác không được xem
+    RETURN '1=2';
+END;
 /
 
-CREATE OR REPLACE PACKAGE BODY BV_VPD_PKG AS
-    FUNCTION get_manv_by_session RETURN VARCHAR2 IS
-        v_manv NHANVIEN.MANV%TYPE;
-    BEGIN
-        SELECT MANV INTO v_manv
-        FROM NHANVIEN
-        WHERE ORA_USERNAME = SYS_CONTEXT('USERENV','SESSION_USER')
-          AND ROWNUM = 1;
-        RETURN v_manv;
-    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
-    END;
+CREATE OR REPLACE FUNCTION pol_bn_func (
+    p_schema IN VARCHAR2,
+    p_obj    IN VARCHAR2
+) RETURN VARCHAR2 
+AS
+    v_user VARCHAR2(100);
+    v_manv VARCHAR2(20);
+BEGIN
+    v_user := SYS_CONTEXT('USERENV', 'SESSION_USER');
 
-    FUNCTION pol_hsba_access(p_schema VARCHAR2, p_obj VARCHAR2) RETURN VARCHAR2 IS
-        v_manv VARCHAR2(20);
-        v_user VARCHAR2(30);
-    BEGIN
-        v_user := SYS_CONTEXT('USERENV','SESSION_USER');
-        IF REGEXP_LIKE(v_user, '^DPV_') THEN
-            RETURN '1=1';
-        ELSIF REGEXP_LIKE(v_user, '^BS_') THEN
-            v_manv := get_manv_by_session;
-            IF v_manv IS NULL THEN RETURN '1=0'; END IF;
-            RETURN 'MABS = ''' || v_manv || '''';
-        ELSE
-            RETURN '1=0';
-        END IF;
-    END;
+    -- Điều phối viên: xem tất cả
+    IF DBMS_SESSION.IS_ROLE_ENABLED('ROLE_DIEUPHOI') OR v_user LIKE 'DPV\_%' ESCAPE '\' THEN
+        RETURN '1=1';
+    END IF;
 
-    FUNCTION pol_benhnhan_by_bacsi(p_schema VARCHAR2, p_obj VARCHAR2) RETURN VARCHAR2 IS
-        v_manv VARCHAR2(20);
-        v_user VARCHAR2(30);
-    BEGIN
-        v_user := SYS_CONTEXT('USERENV','SESSION_USER');
+    -- Y sĩ/Bác sĩ: chỉ thấy bệnh nhân có HSBA do mình phụ trách
+    IF DBMS_SESSION.IS_ROLE_ENABLED('ROLE_BACSI') OR v_user LIKE 'BS\_%' ESCAPE '\' THEN
+        BEGIN
+            SELECT MANV
+            INTO v_manv
+            FROM BVOWNER.NHANVIEN
+            WHERE ORA_USERNAME = v_user
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RETURN '1=2';
+        END;
 
-        IF REGEXP_LIKE(v_user, '^DPV_') THEN
-            RETURN '1=1';
-        ELSIF REGEXP_LIKE(v_user, '^BN_') THEN
-            RETURN 'ORA_USERNAME = SYS_CONTEXT(''USERENV'',''SESSION_USER'')';
-        ELSIF NOT REGEXP_LIKE(v_user, '^BS_') THEN
-            RETURN '1=0';
-        END IF;
+        RETURN 'MABN IN (SELECT H.MABN FROM BVOWNER.HSBA H WHERE H.MABS = ''' || v_manv || ''')';
+    END IF;
 
-        v_manv := get_manv_by_session;
-        IF v_manv IS NULL THEN RETURN '1=0'; END IF;
-        RETURN 'MABN IN (SELECT MABN FROM BVOWNER.HSBA WHERE MABS = ''' || v_manv || ''')';
-    END;
-
-    FUNCTION pol_donthuoc_by_bacsi(p_schema VARCHAR2, p_obj VARCHAR2) RETURN VARCHAR2 IS
-        v_manv VARCHAR2(20);
-    BEGIN
-        IF NOT REGEXP_LIKE(SYS_CONTEXT('USERENV','SESSION_USER'), '^BS_') THEN
-            RETURN '1=0';
-        END IF;
-        v_manv := get_manv_by_session;
-        IF v_manv IS NULL THEN RETURN '1=0'; END IF;
-        RETURN 'MAHSBA IN (SELECT MAHSBA FROM BVOWNER.HSBA WHERE MABS = ''' || v_manv || ''')';
-    END;
-END BV_VPD_PKG;
+    -- Các trường hợp khác không được xem
+    RETURN '1=2';
+END;
 /
 
+-- Áp dụng cho bảng HSBA
 BEGIN
     DBMS_RLS.ADD_POLICY(
         object_schema   => 'BVOWNER',
         object_name     => 'HSBA',
-        policy_name     => 'POL_HSBA_ACCESS',
+        policy_name     => 'POLICY_HSBA_VPD',
         function_schema => 'BVOWNER',
-        policy_function => 'BV_VPD_PKG.POL_HSBA_ACCESS',
-        statement_types => 'SELECT,UPDATE,DELETE',
-        enable          => TRUE,
-        static_policy   => FALSE
+        policy_function => 'pol_hsba_func',
+        statement_types => 'SELECT, UPDATE, DELETE',
+        update_check    => TRUE
     );
 END;
 /
 
+-- Áp dụng cho bảng BENHNHAN
 BEGIN
     DBMS_RLS.ADD_POLICY(
         object_schema   => 'BVOWNER',
         object_name     => 'BENHNHAN',
-        policy_name     => 'POL_BN_BACSI',
+        policy_name     => 'POLICY_BN_VPD',
         function_schema => 'BVOWNER',
-        policy_function => 'BV_VPD_PKG.POL_BENHNHAN_BY_BACSI',
-        statement_types => 'SELECT,UPDATE',
-        enable          => TRUE,
-        static_policy   => FALSE
+        policy_function => 'pol_bn_func',
+        statement_types => 'SELECT, UPDATE',
+        update_check    => TRUE
     );
 END;
 /
-
-BEGIN
-    DBMS_RLS.ADD_POLICY(
-        object_schema   => 'BVOWNER',
-        object_name     => 'DONTHUOC',
-        policy_name     => 'POL_DT_BACSI',
-        function_schema => 'BVOWNER',
-        policy_function => 'BV_VPD_PKG.POL_DONTHUOC_BY_BACSI',
-        statement_types => 'SELECT,UPDATE,DELETE',
-        enable          => TRUE,
-        static_policy   => FALSE
-    );
-END;
-/
-
-PROMPT === YC1 DONE ===
