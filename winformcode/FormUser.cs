@@ -318,9 +318,11 @@ public class FormUser : Form
                 {
                     Title = "Bệnh nhân điều trị",
                     Description = "Bác sĩ/Y sĩ xem và cập nhật tiền sử bệnh, tiền sử gia đình, dị ứng thuốc của bệnh nhân liên quan.",
-                    SelectSql = @"SELECT DISTINCT b.*
+                    SelectSql = @"SELECT b.*
                                   FROM BVOWNER.BENHNHAN b
-                                  JOIN BVOWNER.HSBA h ON h.MABN = b.MABN
+                                  WHERE EXISTS (
+                                      SELECT 1 FROM BVOWNER.HSBA h WHERE h.MABN = b.MABN
+                                  )
                                   ORDER BY b.MABN",
                     TargetName = "BVOWNER.BENHNHAN",
                     KeyColumns = new[] { "MABN" },
