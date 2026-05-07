@@ -10,10 +10,10 @@ public class FormCreateRole : Form
     private Color accentColor = Color.FromArgb(0, 184, 148);
     private Color errorColor = Color.FromArgb(255, 118, 117);
 
-    private TextBox txtRole;
-    private Label lblError;
+    private TextBox txtRole = null!;
+    private Label lblError = null!;
 
-    private System.Windows.Forms.Timer animTimer;
+    private System.Windows.Forms.Timer animTimer = null!;
     private float opacity = 0;
     private float scale = 0.9f;
 
@@ -185,7 +185,7 @@ public class FormCreateRole : Form
     }
 
     // 🌌 Background glow
-    private void DrawBackground(object sender, PaintEventArgs e)
+    private void DrawBackground(object? sender, PaintEventArgs e)
     {
         Graphics g = e.Graphics;
         g.SmoothingMode = SmoothingMode.AntiAlias;

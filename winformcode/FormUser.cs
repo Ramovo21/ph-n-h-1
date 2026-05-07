@@ -9,9 +9,9 @@ using HospitalApp.Forms;
 
 namespace HospitalApp
 {
-    public class FormUser : Form
-    {
-        private sealed class UserDataPage
+public class FormUser : Form
+{
+    private sealed class UserDataPage
         {
             public string Title { get; set; } = string.Empty;
             public string Description { get; set; } = string.Empty;

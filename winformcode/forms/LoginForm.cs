@@ -12,14 +12,19 @@ namespace HospitalApp.Forms
     public class LoginForm : Form
     {
         // Khai báo các thành phần giao diện
-        private TextBox txtUser, txtPass;
-        private Button btnLogin, btnShowPass;
-        private CheckBox chkRemember;
-        private Label lblError, lblTitle;
-        private Panel bg, card;
-        
+        private TextBox txtUser = null!;
+        private TextBox txtPass = null!;
+        private TextBox txtDataSource = null!;
+        private Button btnLogin = null!;
+        private Button btnShowPass = null!;
+        private CheckBox chkRemember = null!;
+        private Label lblError = null!;
+        private Label lblTitle = null!;
+        private Panel bg = null!;
+        private Panel card = null!;
+
         // Sử dụng đầy đủ tên namespace để tránh lỗi "Ambiguous reference" cho Timer
-        private System.Windows.Forms.Timer animTimer; 
+        private System.Windows.Forms.Timer animTimer = null!;
         private float tick = 0;
         private bool isPassVisible = false;
         private readonly string rememberFilePath;
@@ -52,7 +57,7 @@ namespace HospitalApp.Forms
 
             // Thẻ Card chứa form đăng nhập
             card = new DoubleBufferedPanel { 
-                Size = new Size(460, 620), 
+                Size = new Size(460, 700), 
                 BackColor = Color.FromArgb(30, 40, 60) 
             };
             card.Paint += (s, e) => DrawCardBorder(e, 35);
@@ -70,7 +75,7 @@ namespace HospitalApp.Forms
             CreateHeaderLabel("Username", 150);
             txtUser = CreateInputBox("👤 Enter Username", 190);
 
-            // --- PHẦN PASSWORD (Có con mắt) ---
+            // --- PHẦN PASSWORD ---
             CreateHeaderLabel("Password", 280);
             txtPass = CreateInputBox("🔒 Enter Password", 320);
             txtPass.Width = 310; // Thu ngắn một chút để đặt nút con mắt
@@ -91,19 +96,23 @@ namespace HospitalApp.Forms
                 Text = "Remember me", 
                 ForeColor = Color.LightGray,
                 Font = new Font("Segoe UI", 11),
-                Left = 50, Top = 385, AutoSize = true, Cursor = Cursors.Hand
+                Left = 50, Top = 475, AutoSize = true, Cursor = Cursors.Hand
             };
+
+            // --- PHẦN DATASOURCE (Oracle) ---
+            CreateHeaderLabel("Oracle DataSource", 390);
+            txtDataSource = CreateDataSourceInputBox(DBConnection.GetEffectiveDataSource(), 430);
 
             // Thông báo lỗi
             lblError = new Label {
                 ForeColor = Color.FromArgb(255, 80, 100), TextAlign = ContentAlignment.MiddleCenter,
-                Height = 35, Width = 360, Left = 50, Top = 425,
+                Height = 35, Width = 360, Left = 50, Top = 515,
                 Font = new Font("Segoe UI", 10, FontStyle.Italic), BackColor = Color.Transparent
             };
 
             // Nút đăng nhập hiện đại
             btnLogin = new ModernButton {
-                Text = "SIGN IN", Width = 360, Height = 60, Left = 50, Top = 475,
+                Text = "SIGN IN", Width = 360, Height = 60, Left = 50, Top = 565,
                 BackColor = Color.FromArgb(37, 99, 235), ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 14, FontStyle.Bold), Cursor = Cursors.Hand
             };
@@ -162,6 +171,21 @@ namespace HospitalApp.Forms
             return txt;
         }
 
+        // Oracle DataSource textbox (không dùng placeholder để tránh bị hiểu nhầm là "chưa nhập")
+        private TextBox CreateDataSourceInputBox(string initialValue, int top)
+        {
+            TextBox txt = new TextBox {
+                Width = 360, Left = 50, Top = top,
+                Font = new Font("Segoe UI", 13),
+                BackColor = Color.FromArgb(30, 41, 59),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = initialValue
+            };
+            card.Controls.Add(txt);
+            return txt;
+        }
+
         // Logic ẩn/hiện mật khẩu
         private void TogglePasswordVisibility(object sender, EventArgs e) {
             if (txtPass.Text == "🔒 Enter Password")
@@ -181,10 +205,11 @@ namespace HospitalApp.Forms
             }
         }
 
-        private void BtnLogin_Click(object sender, EventArgs e)
+        private void BtnLogin_Click(object? sender, EventArgs e)
         {
             string user = txtUser.Text.Trim();
             string pass = txtPass.Text.Trim();
+            string dataSource = txtDataSource?.Text?.Trim() ?? "";
             
             if (string.IsNullOrEmpty(user) || user.Contains("Enter") || string.IsNullOrEmpty(pass)) {
                 lblError.Text = "⚠ Please enter credentials!";
@@ -203,7 +228,8 @@ namespace HospitalApp.Forms
 
             try {
                 DBConnection db = new DBConnection();
-                using (OracleConnection conn = db.GetConnection(user, pass)) { conn.Open(); }
+                using (OracleConnection conn = db.GetConnection(user, pass, dataSource)) { conn.Open(); }
+                DBConnection.SaveUserDataSource(dataSource);
                 lblError.Text = "";
                 SaveRememberedUser(user);
                 if (upperUser == "BVOWNER" || upperUser == "BV_ADMIN") { new FormAdmin(user, pass).Show(); }
@@ -223,7 +249,7 @@ namespace HospitalApp.Forms
             animTimer.Start();
         }
 
-        private void DrawCinematicBackground(object sender, PaintEventArgs e) {
+        private void DrawCinematicBackground(object? sender, PaintEventArgs e) {
             Graphics g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             using (LinearGradientBrush br = new LinearGradientBrush(bg.ClientRectangle, Color.FromArgb(10, 15, 28), Color.FromArgb(30, 50, 100), 45f))
                 g.FillRectangle(br, bg.ClientRectangle);
@@ -284,7 +310,11 @@ namespace HospitalApp.Forms
             {
                 if (chkRemember.Checked)
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(rememberFilePath));
+                    string? dir = Path.GetDirectoryName(rememberFilePath);
+                    if (!string.IsNullOrWhiteSpace(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
                     File.WriteAllText(rememberFilePath, username);
                 }
                 else if (File.Exists(rememberFilePath))

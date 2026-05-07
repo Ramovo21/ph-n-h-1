@@ -13,9 +13,11 @@ public class FormChangePassword : Form
     private Color errorColor = Color.FromArgb(255, 107, 107);
     private Color inputBg = Color.FromArgb(38, 41, 54);
 
-    private TextBox txtPass, txtConfirm;
-    private Label lblErrPass, lblErrConfirm;
-    private Panel card;
+    private TextBox txtPass = null!;
+    private TextBox txtConfirm = null!;
+    private Label lblErrPass = null!;
+    private Label lblErrConfirm = null!;
+    private Panel card = null!;
     private float opacity = 0;
 
     public string NewPassword => txtPass.Text;
@@ -213,7 +215,7 @@ public class FormChangePassword : Form
         t.Start();
     }
 
-    private void DrawBackground(object sender, PaintEventArgs e)
+    private void DrawBackground(object? sender, PaintEventArgs e)
     {
         using (LinearGradientBrush br = new LinearGradientBrush(this.ClientRectangle, Color.FromArgb(20, 22, 30), Color.FromArgb(40, 45, 60), 45f))
         {

@@ -5,12 +5,12 @@
 
 -- =======================================================================
 -- KB4.1: KIEM TRA CAU TRUC BACKUP DA TAO
--- Dang nhap: SYS AS SYSDBA
+-- Dang nhap: BVOWNER / BVOwner#2026
 -- =======================================================================
 
 -- Kiem tra directory backup
 SELECT directory_name, directory_path FROM dba_directories WHERE directory_name = 'BACKUP_DIR';
--- Ket qua mong doi: BACKUP_DIR | C:\oracle_backup
+-- Ket qua mong doi: BACKUP_DIR | C:\benhvien_backup
 
 -- Kiem tra scheduler job
 SELECT owner, job_name, job_type, job_action, state, enabled, 
@@ -108,13 +108,17 @@ SELECT 'DONTHUOC', COUNT(*) FROM DONTHUOC;
 
 -- Buoc 5: Phuc hoi tu backup
 -- Tim ten file backup moi nhat trong backup log
-SELECT BAK_TIME, BAK_TYPE, STATUS FROM BACKUP_LOG ORDER BY BAK_ID DESC;
+SELECT TO_CHAR(BAK_TIME, 'DD-MON-YYYY HH24:MI:SS') AS THOI_GIAN,  FILE_NAME
+FROM BACKUP_LOG
+WHERE BAK_TYPE = 'AUTO_EXPORT'
+  AND STATUS = 'DONE'
+ORDER BY BAK_TIME DESC;
 
 -- Goi procedure phuc hoi (thay ten file bang file thuc te tu thu muc C:\oracle_backup)
 -- Vi du: bvowner_20260331_113705.dmp
 -- Luu y: thay ten file dung voi file backup cua ban
 BEGIN
-    PROC_IMPORT_RESTORE('bvowner_YYYYMMDD_HHMMSS.dmp');  -- <-- THAY TEN FILE THUC TE
+    PROC_IMPORT_RESTORE('bvowner_20260501_150404.dmp');  -- <-- THAY TEN FILE THUC TE
 END;
 /
 
@@ -130,9 +134,177 @@ SELECT 'DONTHUOC', COUNT(*) FROM DONTHUOC;
 
 -- Kiem tra backup log ghi nhan ca export va import
 SELECT BAK_ID, 
-       TO_CHAR(BAK_TIME, 'HH24:MI:SS') AS GIO, 
+       TO_CHAR(BAK_TIME, 'DD-MM-YYYY HH24:MI:SS') AS THOI_GIAN, 
        BAK_TYPE, 
        STATUS
 FROM BACKUP_LOG
 ORDER BY BAK_ID DESC;
 -- Ket qua mong doi: co dong IMPORT_RESTORE voi STATUS = DONE
+
+
+
+
+
+-- =======================================================================
+-- KB4.5: PHUC HOI DU LIEU DUA TREN NHAT KY KIEM TOAN (FLASHBACK QUERY)
+-- Dang nhap: BVOWNER / BVOwner#2026
+-- =======================================================================
+
+-- Buoc 1: Xem du lieu hien tai truoc khi thay doi
+SELECT * FROM BVOWNER.DONTHUOC
+WHERE MAHSBA = 'HSBA_001';
+
+-- =======================================================================
+-- Buoc 2: Thuc hien cap nhat sai (mo phong loi nghiep vu)
+-- Dang nhap: BS_001 / BS@bv2026!
+-- =======================================================================
+UPDATE BVOWNER.DONTHUOC
+SET LIEUDUNG = 'Sai lieu dung'
+WHERE MAHSBA = 'HSBA_001';
+COMMIT;
+
+-- Kiem tra du lieu sau khi bi sai
+SELECT * FROM BVOWNER.DONTHUOC
+WHERE MAHSBA = 'HSBA_001';
+-- Ket qua mong doi: LIEUDUNG = 'Sai lieu dung'
+
+-- =======================================================================
+-- Buoc 3: Lay thoi diem thay doi tu audit trail
+-- Dang nhap: BVOWNER / BVOwner#2026
+-- =======================================================================
+SELECT TO_CHAR(event_timestamp, 'DD-MON-YY HH24:MI:SS') AS THOI_GIAN,
+       dbusername,
+       action_name,
+       object_name,
+       unified_audit_policies
+FROM unified_audit_trail
+WHERE object_name = 'DONTHUOC'
+  AND action_name = 'UPDATE'
+ORDER BY event_timestamp DESC
+FETCH FIRST 5 ROWS ONLY;
+
+-- =======================================================================
+-- Buoc 4: Flashback Query - xem du lieu truoc khi bi thay doi
+-- =======================================================================
+SELECT * FROM BVOWNER.DONTHUOC
+AS OF TIMESTAMP TIMESTAMP '2026-05-01 15:07:00'
+WHERE MAHSBA = 'HSBA_001';
+-- Ket qua mong doi: LIEUDUNG la gia tri dung truoc khi bi cap nhat sai
+
+-- =======================================================================
+-- Buoc 5: Phuc hoi du lieu bang tay
+-- =======================================================================
+-- Cap nhat lai du lieu dung dua tren ket qua flashback
+-- (Ban co the copy gia tri dung tu ket qua tren)
+
+UPDATE BVOWNER.DONTHUOC
+SET LIEUDUNG = 'Uong 1 vien/ngay truoc an sang 30 phut, dung truoc 7 ngay'
+WHERE MAHSBA = 'HSBA_001' AND TENTHUOC = 'Omeprazole 20mg';
+COMMIT;
+ 
+-- =======================================================================
+-- Buoc 6: Xem du lieu sau khi da phuc hoi
+-- =======================================================================
+SELECT * FROM BVOWNER.DONTHUOC
+WHERE MAHSBA = 'HSBA_001';
+-- Ket qua mong doi: Du lieu quay lai nhu luc truoc khi bi thay doi sai
+
+
+
+
+-- =======================================================================
+-- KB4.6: PHUC HOI DU LIEU SAU KHI BI XOA TOAN BO (FLASHBACK TABLE)
+-- Dang nhap: BVOWNER / BVOwner#2026
+-- =======================================================================
+
+-- =======================================================================
+-- Buoc 1: Kiem tra du lieu ban dau
+-- =======================================================================
+SELECT COUNT(*) FROM BVOWNER.DONTHUOC;
+-- Mong doi: > 0
+
+-- =======================================================================
+-- Buoc 2: Mo phong loi nghiep vu (xoa toan bo du lieu)
+-- Dang nhap: BS_001 / BS@bv2026!
+-- =======================================================================
+DELETE FROM BVOWNER.DONTHUOC;
+COMMIT;
+
+-- Kiem tra sau khi bi xoa
+SELECT COUNT(*) FROM BVOWNER.DONTHUOC;
+-- Mong doi: = 0
+
+-- =======================================================================
+-- Buoc 3: Lay thoi diem truoc khi bi xoa (tu audit)
+-- Dang nhap: BVOWNER / BVOwner#2026
+-- =======================================================================
+SELECT TO_CHAR(event_timestamp, 'DD-MON-YY HH24:MI:SS') AS THOI_GIAN,
+       dbusername,
+       action_name,
+       object_name,
+       unified_audit_policies
+FROM unified_audit_trail
+WHERE object_name = 'DONTHUOC'
+  AND action_name = 'DELETE'
+ORDER BY event_timestamp DESC;
+
+-- =======================================================================
+-- Buoc 4: Flashback Table
+-- =======================================================================
+FLASHBACK TABLE DONTHUOC
+TO TIMESTAMP TIMESTAMP '2026-05-01 23:10:00';
+COMMIT;
+
+-- =======================================================================
+-- Buoc 5: Kiem tra sau phuc hoi
+-- =======================================================================
+SELECT COUNT(*) FROM BVOWNER.DONTHUOC;
+-- Mong doi: du lieu duoc khoi phuc lai day du
+
+SELECT * FROM BVOWNER.DONTHUOC;
+
+
+
+-- =======================================================================
+-- KB4.7: PHUC HOI BANG BI DROP (FLASHBACK DROP)
+-- =======================================================================
+
+-- =======================================================================
+-- Bước 1: Kiểm tra dữ liệu trước khi xảy ra sự cố
+-- Đăng nhập: BVOWNER / BVOwner#2026
+-- =======================================================================
+SELECT COUNT(*) FROM BVOWNER.DONTHUOC;
+-- Kết quả mong đợi: > 0 dòng
+
+-- =======================================================================
+-- Bước 2: Mô phỏng lỗi - drop nhầm bảng
+-- Đăng nhập: BVOWNER / BVOwner#2026
+-- =======================================================================
+DROP TABLE DONTHUOC;
+
+-- Kiểm tra lại
+SELECT * FROM BVOWNER.DONTHUOC;
+-- Kết quả mong đợi: ORA-00942: table or view does not exist
+
+
+-- =======================================================================
+-- Bước 3: Kiểm tra recycle bin
+-- =======================================================================
+SELECT original_name, object_name, droptime
+FROM user_recyclebin
+WHERE original_name = 'DONTHUOC';
+
+-- Kết quả mong đợi:
+-- thấy object_name dạng BIN$...
+
+-- =======================================================================
+-- Bước 4: Phục hồi bảng
+-- =======================================================================
+FLASHBACK TABLE DONTHUOC TO BEFORE DROP;
+
+-- =======================================================================
+-- Bước 5: Kiểm tra lại dữ liệu sau khi phục hồi
+-- =======================================================================
+SELECT COUNT(*) FROM BVOWNER.DONTHUOC;
+
+-- Kết quả mong đợi: dữ liệu được khôi phục đầy đủ
