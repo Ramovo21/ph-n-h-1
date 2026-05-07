@@ -206,7 +206,7 @@ namespace HospitalApp.Forms
                 using (OracleConnection conn = db.GetConnection(user, pass)) { conn.Open(); }
                 lblError.Text = "";
                 SaveRememberedUser(user);
-                if (upperUser == "BVOWNER") { new FormAdmin(user, pass).Show(); }
+                if (upperUser == "BVOWNER" || upperUser == "BV_ADMIN") { new FormAdmin(user, pass).Show(); }
                 else { new FormUser(user, pass).Show(); }
                 this.Hide();
             }
