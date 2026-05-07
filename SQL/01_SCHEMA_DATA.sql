@@ -97,18 +97,18 @@
         CONSTRAINT FK_DT_HSBA FOREIGN KEY (MAHSBA) REFERENCES HSBA(MAHSBA)
     );
 
--- BẢNG THÔNG BÁO (cho Yêu cầu 2 - OLS)
-CREATE TABLE THONGBAO (
-    MATB        VARCHAR2(20)    PRIMARY KEY,
-    NOIDUNG     NCLOB,
-    NGAYGIO     TIMESTAMP       DEFAULT SYSTIMESTAMP,
-    DIADIEM     NVARCHAR2(200)
-);
+    -- BẢNG THÔNG BÁO (cho Yêu cầu 2 - OLS)
+    CREATE TABLE THONGBAO (
+        MATB        VARCHAR2(20)    PRIMARY KEY,
+        NOIDUNG     NCLOB,
+        NGAYGIO     TIMESTAMP       DEFAULT SYSTIMESTAMP,
+        DIADIEM     NVARCHAR2(200)
+    );
 
-ALTER TABLE DONTHUOC ENABLE ROW MOVEMENT;
-ALTER TABLE HSBA ENABLE ROW MOVEMENT;
-ALTER TABLE HSBA_DV ENABLE ROW MOVEMENT;
-ALTER TABLE BENHNHAN ENABLE ROW MOVEMENT;
+    ALTER TABLE DONTHUOC ENABLE ROW MOVEMENT;
+    ALTER TABLE HSBA ENABLE ROW MOVEMENT;
+    ALTER TABLE HSBA_DV ENABLE ROW MOVEMENT;
+    ALTER TABLE BENHNHAN ENABLE ROW MOVEMENT;
 
     COMMIT;
 
@@ -125,70 +125,337 @@ ALTER TABLE BENHNHAN ENABLE ROW MOVEMENT;
     -- =========================================================================
 
     -- 4.1 NHÂN VIÊN
-    -- 20 Điều phối viên
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_001','Nguyen Thi Lan','Nu',TO_DATE('1985-03-10','YYYY-MM-DD'),'201000001','TP HCM','0901000001','Dieu phoi vien','Tieu hoa','TP HCM','DPV_001');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_002','Tran Van Minh','Nam',TO_DATE('1988-07-22','YYYY-MM-DD'),'201000002','Ha Noi','0901000002','Dieu phoi vien','Than kinh','Ha Noi','DPV_002');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_003','Le Thi Hoa','Nu',TO_DATE('1990-01-15','YYYY-MM-DD'),'201000003','Da Nang','0901000003','Dieu phoi vien','Tim mach','TP HCM','DPV_003');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_004','Pham Quoc Hung','Nam',TO_DATE('1987-11-05','YYYY-MM-DD'),'201000004','Hai Phong','0901000004','Dieu phoi vien','Tieu hoa','Hai Phong','DPV_004');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_005','Hoang Thi Mai','Nu',TO_DATE('1992-06-18','YYYY-MM-DD'),'201000005','Can Tho','0901000005','Dieu phoi vien','Than kinh','TP HCM','DPV_005');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_006','Vu Thi Thu','Nu',TO_DATE('1986-09-25','YYYY-MM-DD'),'201000006','TP HCM','0901000006','Dieu phoi vien','Tim mach','TP HCM','DPV_006');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_007','Dang Van Nam','Nam',TO_DATE('1989-04-08','YYYY-MM-DD'),'201000007','Ha Noi','0901000007','Dieu phoi vien','Tieu hoa','Ha Noi','DPV_007');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_008','Bui Thi Nga','Nu',TO_DATE('1991-12-30','YYYY-MM-DD'),'201000008','Hue','0901000008','Dieu phoi vien','Than kinh','Ha Noi','DPV_008');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_009','Do Van Duc','Nam',TO_DATE('1984-02-14','YYYY-MM-DD'),'201000009','Vinh','0901000009','Dieu phoi vien','Tim mach','Ha Noi','DPV_009');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_010','Nguyen Van Thanh','Nam',TO_DATE('1993-08-20','YYYY-MM-DD'),'201000010','Nha Trang','0901000010','Dieu phoi vien','Tieu hoa','TP HCM','DPV_010');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_011','Tran Thi Bich','Nu',TO_DATE('1985-05-12','YYYY-MM-DD'),'201000011','TP HCM','0901000011','Dieu phoi vien','Than kinh','TP HCM','DPV_011');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_012','Le Van Kien','Nam',TO_DATE('1987-10-03','YYYY-MM-DD'),'201000012','Ha Noi','0901000012','Dieu phoi vien','Tim mach','Ha Noi','DPV_012');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_013','Pham Thi Thuy','Nu',TO_DATE('1990-07-27','YYYY-MM-DD'),'201000013','Hai Phong','0901000013','Dieu phoi vien','Tieu hoa','Hai Phong','DPV_013');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_014','Hoang Van Long','Nam',TO_DATE('1988-03-16','YYYY-MM-DD'),'201000014','Da Nang','0901000014','Dieu phoi vien','Than kinh','TP HCM','DPV_014');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_015','Vu Van Toan','Nam',TO_DATE('1986-01-09','YYYY-MM-DD'),'201000015','TP HCM','0901000015','Dieu phoi vien','Tim mach','TP HCM','DPV_015');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_016','Dang Thi Lan','Nu',TO_DATE('1991-11-11','YYYY-MM-DD'),'201000016','Ha Noi','0901000016','Dieu phoi vien','Tieu hoa','Ha Noi','DPV_016');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_017','Bui Van Hai','Nam',TO_DATE('1989-09-04','YYYY-MM-DD'),'201000017','Can Tho','0901000017','Dieu phoi vien','Than kinh','TP HCM','DPV_017');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_018','Do Thi Huong','Nu',TO_DATE('1992-04-22','YYYY-MM-DD'),'201000018','Vung Tau','0901000018','Dieu phoi vien','Tim mach','TP HCM','DPV_018');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_019','Nguyen Thi Phuong','Nu',TO_DATE('1984-08-15','YYYY-MM-DD'),'201000019','TP HCM','0901000019','Dieu phoi vien','Tieu hoa','TP HCM','DPV_019');
-    INSERT INTO NHANVIEN VALUES ('NV_DPV_020','Tran Van Binh','Nam',TO_DATE('1986-06-06','YYYY-MM-DD'),'201000020','Ha Noi','0901000020','Dieu phoi vien','Than kinh','Ha Noi','DPV_020');
+--    -- 20 Điều phối viên
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_001','Nguyen Thi Lan','Nu',TO_DATE('1985-03-10','YYYY-MM-DD'),'201000001','TP HCM','0901000001','Dieu phoi vien','Tieu hoa','TP HCM','DPV_001');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_002','Tran Van Minh','Nam',TO_DATE('1988-07-22','YYYY-MM-DD'),'201000002','Ha Noi','0901000002','Dieu phoi vien','Than kinh','Ha Noi','DPV_002');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_003','Le Thi Hoa','Nu',TO_DATE('1990-01-15','YYYY-MM-DD'),'201000003','Da Nang','0901000003','Dieu phoi vien','Tim mach','TP HCM','DPV_003');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_004','Pham Quoc Hung','Nam',TO_DATE('1987-11-05','YYYY-MM-DD'),'201000004','Hai Phong','0901000004','Dieu phoi vien','Tieu hoa','Hai Phong','DPV_004');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_005','Hoang Thi Mai','Nu',TO_DATE('1992-06-18','YYYY-MM-DD'),'201000005','Can Tho','0901000005','Dieu phoi vien','Than kinh','TP HCM','DPV_005');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_006','Vu Thi Thu','Nu',TO_DATE('1986-09-25','YYYY-MM-DD'),'201000006','TP HCM','0901000006','Dieu phoi vien','Tim mach','TP HCM','DPV_006');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_007','Dang Van Nam','Nam',TO_DATE('1989-04-08','YYYY-MM-DD'),'201000007','Ha Noi','0901000007','Dieu phoi vien','Tieu hoa','Ha Noi','DPV_007');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_008','Bui Thi Nga','Nu',TO_DATE('1991-12-30','YYYY-MM-DD'),'201000008','Hue','0901000008','Dieu phoi vien','Than kinh','Ha Noi','DPV_008');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_009','Do Van Duc','Nam',TO_DATE('1984-02-14','YYYY-MM-DD'),'201000009','Vinh','0901000009','Dieu phoi vien','Tim mach','Ha Noi','DPV_009');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_010','Nguyen Van Thanh','Nam',TO_DATE('1993-08-20','YYYY-MM-DD'),'201000010','Nha Trang','0901000010','Dieu phoi vien','Tieu hoa','TP HCM','DPV_010');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_011','Tran Thi Bich','Nu',TO_DATE('1985-05-12','YYYY-MM-DD'),'201000011','TP HCM','0901000011','Dieu phoi vien','Than kinh','TP HCM','DPV_011');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_012','Le Van Kien','Nam',TO_DATE('1987-10-03','YYYY-MM-DD'),'201000012','Ha Noi','0901000012','Dieu phoi vien','Tim mach','Ha Noi','DPV_012');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_013','Pham Thi Thuy','Nu',TO_DATE('1990-07-27','YYYY-MM-DD'),'201000013','Hai Phong','0901000013','Dieu phoi vien','Tieu hoa','Hai Phong','DPV_013');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_014','Hoang Van Long','Nam',TO_DATE('1988-03-16','YYYY-MM-DD'),'201000014','Da Nang','0901000014','Dieu phoi vien','Than kinh','TP HCM','DPV_014');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_015','Vu Van Toan','Nam',TO_DATE('1986-01-09','YYYY-MM-DD'),'201000015','TP HCM','0901000015','Dieu phoi vien','Tim mach','TP HCM','DPV_015');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_016','Dang Thi Lan','Nu',TO_DATE('1991-11-11','YYYY-MM-DD'),'201000016','Ha Noi','0901000016','Dieu phoi vien','Tieu hoa','Ha Noi','DPV_016');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_017','Bui Van Hai','Nam',TO_DATE('1989-09-04','YYYY-MM-DD'),'201000017','Can Tho','0901000017','Dieu phoi vien','Than kinh','TP HCM','DPV_017');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_018','Do Thi Huong','Nu',TO_DATE('1992-04-22','YYYY-MM-DD'),'201000018','Vung Tau','0901000018','Dieu phoi vien','Tim mach','TP HCM','DPV_018');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_019','Nguyen Thi Phuong','Nu',TO_DATE('1984-08-15','YYYY-MM-DD'),'201000019','TP HCM','0901000019','Dieu phoi vien','Tieu hoa','TP HCM','DPV_019');
+--    INSERT INTO NHANVIEN VALUES ('NV_DPV_020','Tran Van Binh','Nam',TO_DATE('1986-06-06','YYYY-MM-DD'),'201000020','Ha Noi','0901000020','Dieu phoi vien','Than kinh','Ha Noi','DPV_020');
+
+DECLARE
+    v_i        NUMBER;
+    v_manv     VARCHAR2(20);
+    v_username VARCHAR2(30);
+    v_cmnd     VARCHAR2(20);
+    v_sodt     VARCHAR2(15);
+    v_tinh NVARCHAR2(50);
+    
+    TYPE t_arr IS TABLE OF VARCHAR2(50);
+    
+    ho   t_arr := t_arr('Nguyen','Tran','Le','Pham','Hoang','Phan','Vu','Dang','Bui','Do');
+    dem  t_arr := t_arr('Van','Thi','Huu','Duc','Minh','Ngoc','Quang','Thanh','Anh','Thu');
+    ten  t_arr := t_arr('Lan','Minh','Hoa','Hung','Mai','Thu','Nam','Nga','Duc','Thanh');
+    
+    tinh t_arr := t_arr('TP HCM','Ha Noi','Hai Phong');
+    
+    v_hoten NVARCHAR2(100);
+BEGIN
+    FOR v_i IN 1..20 LOOP
+    
+        v_manv     := 'NV_DPV_' || LPAD(v_i, 3, '0');
+        v_username := 'DPV_'    || LPAD(v_i, 3, '0');
+        v_cmnd     := '2010'    || LPAD(v_i, 6, '0');
+        v_sodt     := '0901'    || LPAD(v_i, 6, '0');
+    
+            -- random tên
+        v_hoten :=
+            ho(TRUNC(DBMS_RANDOM.VALUE(1, ho.COUNT+1))) || ' ' ||
+            dem(TRUNC(DBMS_RANDOM.VALUE(1, dem.COUNT+1))) || ' ' ||
+            ten(TRUNC(DBMS_RANDOM.VALUE(1, ten.COUNT+1)));
+    
+        v_tinh := tinh(TRUNC(DBMS_RANDOM.VALUE(1, tinh.COUNT+1)));
+    
+        INSERT INTO NHANVIEN (
+            MANV, HOTEN, PHAI, NGAYSINH, CMND,
+            QUEQUAN, SODT, VAITRO, CHUYENKHOA, COSO, ORA_USERNAME
+        )
+        VALUES (
+            v_manv,
+            v_hoten,
+            CASE WHEN DBMS_RANDOM.VALUE < 0.5 THEN 'Nam' ELSE 'Nu' END,
+            DATE '1985-01-01' + TRUNC(DBMS_RANDOM.VALUE(0, 2000)),
+            v_cmnd,
+            v_tinh,
+            v_sodt,
+            'Dieu phoi vien',
+            CASE TRUNC(DBMS_RANDOM.VALUE(0,3))
+                WHEN 0 THEN 'Tieu hoa'
+                WHEN 1 THEN 'Than kinh'
+                ELSE 'Tim mach'
+            END,
+            v_tinh,
+            v_username
+        );
+    
+    END LOOP;
+    
+    COMMIT;
+END;
+/    
 
     -- 10 Bác sĩ/Y sĩ (mẫu - thực tế có 100)
-    INSERT INTO NHANVIEN VALUES ('NV_BS_001','BS Nguyen Van An','Nam',TO_DATE('1975-01-20','YYYY-MM-DD'),'202000001','TP HCM','0911000001','Bac si/Y si','Tieu hoa','TP HCM','BS_001');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_002','BS Tran Thi Cam','Nu',TO_DATE('1978-05-14','YYYY-MM-DD'),'202000002','Ha Noi','0911000002','Bac si/Y si','Than kinh','Ha Noi','BS_002');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_003','BS Le Van Cuong','Nam',TO_DATE('1980-09-30','YYYY-MM-DD'),'202000003','Da Nang','0911000003','Bac si/Y si','Tim mach','TP HCM','BS_003');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_004','BS Pham Thi Dao','Nu',TO_DATE('1976-04-25','YYYY-MM-DD'),'202000004','TP HCM','0911000004','Bac si/Y si','Tieu hoa','TP HCM','BS_004');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_005','BS Hoang Van Em','Nam',TO_DATE('1982-12-08','YYYY-MM-DD'),'202000005','Hai Phong','0911000005','Bac si/Y si','Than kinh','Hai Phong','BS_005');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_006','BS Vu Thi Phuong','Nu',TO_DATE('1979-07-17','YYYY-MM-DD'),'202000006','TP HCM','0911000006','Bac si/Y si','Tim mach','TP HCM','BS_006');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_007','BS Dang Van Giang','Nam',TO_DATE('1977-02-28','YYYY-MM-DD'),'202000007','Ha Noi','0911000007','Bac si/Y si','Tieu hoa','Ha Noi','BS_007');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_008','BS Bui Thi Hang','Nu',TO_DATE('1981-10-05','YYYY-MM-DD'),'202000008','TP HCM','0911000008','Bac si/Y si','Than kinh','TP HCM','BS_008');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_009','BS Do Van Hy','Nam',TO_DATE('1974-06-11','YYYY-MM-DD'),'202000009','Hue','0911000009','Bac si/Y si','Tim mach','Hai Phong','BS_009');
-    INSERT INTO NHANVIEN VALUES ('NV_BS_010','BS Nguyen Thi Kim','Nu',TO_DATE('1983-03-03','YYYY-MM-DD'),'202000010','TP HCM','0911000010','Bac si/Y si','Tieu hoa','TP HCM','BS_010');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_001','BS Nguyen Van An','Nam',TO_DATE('1975-01-20','YYYY-MM-DD'),'202000001','TP HCM','0911000001','Bac si/Y si','Tieu hoa','TP HCM','BS_001');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_002','BS Tran Thi Cam','Nu',TO_DATE('1978-05-14','YYYY-MM-DD'),'202000002','Ha Noi','0911000002','Bac si/Y si','Than kinh','Ha Noi','BS_002');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_003','BS Le Van Cuong','Nam',TO_DATE('1980-09-30','YYYY-MM-DD'),'202000003','Da Nang','0911000003','Bac si/Y si','Tim mach','TP HCM','BS_003');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_004','BS Pham Thi Dao','Nu',TO_DATE('1976-04-25','YYYY-MM-DD'),'202000004','TP HCM','0911000004','Bac si/Y si','Tieu hoa','TP HCM','BS_004');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_005','BS Hoang Van Em','Nam',TO_DATE('1982-12-08','YYYY-MM-DD'),'202000005','Hai Phong','0911000005','Bac si/Y si','Than kinh','Hai Phong','BS_005');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_006','BS Vu Thi Phuong','Nu',TO_DATE('1979-07-17','YYYY-MM-DD'),'202000006','TP HCM','0911000006','Bac si/Y si','Tim mach','TP HCM','BS_006');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_007','BS Dang Van Giang','Nam',TO_DATE('1977-02-28','YYYY-MM-DD'),'202000007','Ha Noi','0911000007','Bac si/Y si','Tieu hoa','Ha Noi','BS_007');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_008','BS Bui Thi Hang','Nu',TO_DATE('1981-10-05','YYYY-MM-DD'),'202000008','TP HCM','0911000008','Bac si/Y si','Than kinh','TP HCM','BS_008');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_009','BS Do Van Hy','Nam',TO_DATE('1974-06-11','YYYY-MM-DD'),'202000009','Hue','0911000009','Bac si/Y si','Tim mach','Hai Phong','BS_009');
+--    INSERT INTO NHANVIEN VALUES ('NV_BS_010','BS Nguyen Thi Kim','Nu',TO_DATE('1983-03-03','YYYY-MM-DD'),'202000010','TP HCM','0911000010','Bac si/Y si','Tieu hoa','TP HCM','BS_010');
+
+    DECLARE
+        v_i        NUMBER;
+        v_manv     VARCHAR2(20);
+        v_username VARCHAR2(30);
+        v_cmnd     VARCHAR2(20);
+        v_sodt     VARCHAR2(15);
+    
+        TYPE t_arr IS TABLE OF VARCHAR2(50);
+    
+        ho   t_arr := t_arr('Nguyen','Tran','Le','Pham','Hoang','Phan','Vu','Dang','Bui','Do');
+        dem  t_arr := t_arr('Van','Thi','Huu','Duc','Minh','Ngoc','Quang','Thanh','Anh','Thu');
+        ten  t_arr := t_arr('An','Binh','Cuong','Dung','Hanh','Khanh','Linh','Nam','Phuong','Trang');
+    
+        v_hoten NVARCHAR2(100);
+    BEGIN
+        FOR v_i IN 1..100 LOOP
+    
+            v_manv     := 'NV_BS_' || LPAD(v_i, 3, '0');
+            v_username := 'BS_'    || LPAD(v_i, 3, '0');
+            v_cmnd     := '2020'   || LPAD(v_i, 6, '0');
+            v_sodt     := '0911'   || LPAD(v_i, 6, '0');
+    
+            v_hoten :=
+                ho(TRUNC(DBMS_RANDOM.VALUE(1, ho.COUNT+1))) || ' ' ||
+                dem(TRUNC(DBMS_RANDOM.VALUE(1, dem.COUNT+1))) || ' ' ||
+                ten(TRUNC(DBMS_RANDOM.VALUE(1, ten.COUNT+1)));
+    
+            INSERT INTO NHANVIEN (
+                MANV, HOTEN, PHAI, NGAYSINH, CMND,
+                QUEQUAN, SODT, VAITRO, CHUYENKHOA, COSO, ORA_USERNAME
+            )
+            VALUES (
+                v_manv,
+                v_hoten,
+                CASE WHEN DBMS_RANDOM.VALUE < 0.5 THEN 'Nam' ELSE 'Nu' END,
+                DATE '1980-01-01' + TRUNC(DBMS_RANDOM.VALUE(0,1000)),
+                v_cmnd,
+                'TP HCM',
+                v_sodt,
+                'Bac si/Y si',
+                CASE TRUNC(DBMS_RANDOM.VALUE(0,3))
+                    WHEN 0 THEN 'Tieu hoa'
+                    WHEN 1 THEN 'Than kinh'
+                    ELSE 'Tim mach'
+                END,
+                CASE TRUNC(DBMS_RANDOM.VALUE(0,3))
+                    WHEN 0 THEN 'TP HCM'
+                    WHEN 1 THEN 'Ha Noi'
+                    ELSE 'Hai Phong'
+                END,
+                v_username
+            );
+    
+        END LOOP;
+    
+        COMMIT;
+    END;
+    /
 
     -- 5 Kỹ thuật viên (mẫu - thực tế có 50)
-    INSERT INTO NHANVIEN VALUES ('NV_KTV_001','KTV Nguyen Van Long','Nam',TO_DATE('1990-04-01','YYYY-MM-DD'),'203000001','TP HCM','0921000001','Ky thuat vien','Xet nghiem','TP HCM','KTV_001');
-    INSERT INTO NHANVIEN VALUES ('NV_KTV_002','KTV Tran Thi My','Nu',TO_DATE('1992-08-22','YYYY-MM-DD'),'203000002','Ha Noi','0921000002','Ky thuat vien','Chan doan hinh anh','Ha Noi','KTV_002');
-    INSERT INTO NHANVIEN VALUES ('NV_KTV_003','KTV Le Van Nam','Nam',TO_DATE('1991-01-17','YYYY-MM-DD'),'203000003','Da Nang','0921000003','Ky thuat vien','Xet nghiem','TP HCM','KTV_003');
-    INSERT INTO NHANVIEN VALUES ('NV_KTV_004','KTV Pham Thi Oanh','Nu',TO_DATE('1993-05-30','YYYY-MM-DD'),'203000004','TP HCM','0921000004','Ky thuat vien','Chan doan hinh anh','TP HCM','KTV_004');
-    INSERT INTO NHANVIEN VALUES ('NV_KTV_005','KTV Hoang Van Phuc','Nam',TO_DATE('1989-11-09','YYYY-MM-DD'),'203000005','Hai Phong','0921000005','Ky thuat vien','Xet nghiem','Hai Phong','KTV_005');
+--    INSERT INTO NHANVIEN VALUES ('NV_KTV_001','KTV Nguyen Van Long','Nam',TO_DATE('1990-04-01','YYYY-MM-DD'),'203000001','TP HCM','0921000001','Ky thuat vien','Xet nghiem','TP HCM','KTV_001');
+--    INSERT INTO NHANVIEN VALUES ('NV_KTV_002','KTV Tran Thi My','Nu',TO_DATE('1992-08-22','YYYY-MM-DD'),'203000002','Ha Noi','0921000002','Ky thuat vien','Chan doan hinh anh','Ha Noi','KTV_002');
+--    INSERT INTO NHANVIEN VALUES ('NV_KTV_003','KTV Le Van Nam','Nam',TO_DATE('1991-01-17','YYYY-MM-DD'),'203000003','Da Nang','0921000003','Ky thuat vien','Xet nghiem','TP HCM','KTV_003');
+--    INSERT INTO NHANVIEN VALUES ('NV_KTV_004','KTV Pham Thi Oanh','Nu',TO_DATE('1993-05-30','YYYY-MM-DD'),'203000004','TP HCM','0921000004','Ky thuat vien','Chan doan hinh anh','TP HCM','KTV_004');
+--    INSERT INTO NHANVIEN VALUES ('NV_KTV_005','KTV Hoang Van Phuc','Nam',TO_DATE('1989-11-09','YYYY-MM-DD'),'203000005','Hai Phong','0921000005','Ky thuat vien','Xet nghiem','Hai Phong','KTV_005');
+
+    DECLARE
+        v_i        NUMBER;
+        v_manv     VARCHAR2(20);
+        v_username VARCHAR2(30);
+        v_cmnd     VARCHAR2(20);
+        v_sodt     VARCHAR2(15);
+        v_tinh NVARCHAR2(50);
+    
+        TYPE t_arr IS TABLE OF VARCHAR2(50);
+    
+        ho   t_arr := t_arr('Nguyen','Tran','Le','Pham','Hoang','Phan','Vu','Dang','Bui','Do');
+        dem  t_arr := t_arr('Van','Thi','Huu','Duc','Minh','Ngoc','Quang','Thanh','Anh','Thu');
+        ten  t_arr := t_arr('Long','My','Nam','Oanh','Phuc','Hieu','Trang','Khoa','Linh','Duy');
+    
+        tinh t_arr := t_arr('TP HCM','Ha Noi','Hai Phong');
+    
+        v_hoten NVARCHAR2(100);
+    BEGIN
+        FOR v_i IN 1..50 LOOP
+    
+            v_manv     := 'NV_KTV_' || LPAD(v_i, 3, '0');
+            v_username := 'KTV_'    || LPAD(v_i, 3, '0');
+            v_cmnd     := '2030'    || LPAD(v_i, 6, '0');
+            v_sodt     := '0921'    || LPAD(v_i, 6, '0');
+    
+            v_tinh := tinh(TRUNC(DBMS_RANDOM.VALUE(1, tinh.COUNT+1)));
+    
+            -- random tên
+            v_hoten :=
+                'KTV ' ||
+                ho(TRUNC(DBMS_RANDOM.VALUE(1, ho.COUNT+1))) || ' ' ||
+                dem(TRUNC(DBMS_RANDOM.VALUE(1, dem.COUNT+1))) || ' ' ||
+                ten(TRUNC(DBMS_RANDOM.VALUE(1, ten.COUNT+1)));
+    
+            INSERT INTO NHANVIEN (
+                MANV, HOTEN, PHAI, NGAYSINH, CMND,
+                QUEQUAN, SODT, VAITRO, CHUYENKHOA, COSO, ORA_USERNAME
+            )
+            VALUES (
+                v_manv,
+                v_hoten,
+                CASE WHEN DBMS_RANDOM.VALUE < 0.5 THEN 'Nam' ELSE 'Nu' END,
+                DATE '1990-01-01' + TRUNC(DBMS_RANDOM.VALUE(0, 1500)),
+                v_cmnd,
+                v_tinh,
+                v_sodt,
+                'Ky thuat vien',
+                CASE TRUNC(DBMS_RANDOM.VALUE(0,2))
+                    WHEN 0 THEN 'Xet nghiem'
+                    ELSE 'Chan doan hinh anh'
+                END,
+                v_tinh,
+                v_username
+            );
+    
+        END LOOP;
+    
+        COMMIT;
+    END;
+    /
 
     COMMIT;
 
     -- 4.2 BỆNH NHÂN (10 mẫu - thực tế có 100,000)
-    INSERT INTO BENHNHAN VALUES ('BN_001','Nguyen Thi Anh','Nu',TO_DATE('1980-01-01','YYYY-MM-DD'),'310000001','12','Le Loi','Q1','TP HCM','Cao huyet ap','Tieu duong type 2',NULL,'BN_001');
-    INSERT INTO BENHNHAN VALUES ('BN_002','Tran Van Binh','Nam',TO_DATE('1975-06-15','YYYY-MM-DD'),'310000002','45','Nguyen Hue','Q3','TP HCM',NULL,NULL,NULL,'BN_002');
-    INSERT INTO BENHNHAN VALUES ('BN_003','Le Thi Cam','Nu',TO_DATE('1990-09-20','YYYY-MM-DD'),'310000003','78','Pasteur','Q5','TP HCM','Hen suyen',NULL,'Penicillin','BN_003');
-    INSERT INTO BENHNHAN VALUES ('BN_004','Pham Van Dung','Nam',TO_DATE('1968-12-05','YYYY-MM-DD'),'310000004','23','Ba Trieu','Hoan Kiem','Ha Noi','Benh tim mach',NULL,NULL,'BN_004');
-    INSERT INTO BENHNHAN VALUES ('BN_005','Hoang Thi Em','Nu',TO_DATE('1985-04-10','YYYY-MM-DD'),'310000005','56','Tran Phu','Hai Chau','Da Nang',NULL,'Ung thu vu','Aspirin','BN_005');
-    INSERT INTO BENHNHAN VALUES ('BN_006','Vu Van Phong','Nam',TO_DATE('1972-08-25','YYYY-MM-DD'),'310000006','89','Le Duan','Thanh Khe','Da Nang','Tieu duong',NULL,NULL,'BN_006');
-    INSERT INTO BENHNHAN VALUES ('BN_007','Dang Thi Giang','Nu',TO_DATE('1995-02-14','YYYY-MM-DD'),'310000007','11','Hung Vuong','Ngo Quyen','Hai Phong',NULL,NULL,NULL,'BN_007');
-    INSERT INTO BENHNHAN VALUES ('BN_008','Bui Van Hai','Nam',TO_DATE('1960-07-07','YYYY-MM-DD'),'310000008','34','Tran Hung Dao','Le Chan','Hai Phong','Xuong khop','Tim mach',NULL,'BN_008');
-    INSERT INTO BENHNHAN VALUES ('BN_009','Do Thi Yen','Nu',TO_DATE('1988-11-11','YYYY-MM-DD'),'310000009','67','Nguyen Trai','Thanh Xuan','Ha Noi',NULL,NULL,'Sulfa','BN_009');
-    INSERT INTO BENHNHAN VALUES ('BN_010','Nguyen Van Khoa','Nam',TO_DATE('1978-03-28','YYYY-MM-DD'),'310000010','90','Vo Thi Sau','Q3','TP HCM','Gan','Tieu duong',NULL,'BN_010');
+--    INSERT INTO BENHNHAN VALUES ('BN_001','Nguyen Thi Anh','Nu',TO_DATE('1980-01-01','YYYY-MM-DD'),'310000001','12','Le Loi','Q1','TP HCM','Cao huyet ap','Tieu duong type 2',NULL,'BN_001');
+--    INSERT INTO BENHNHAN VALUES ('BN_002','Tran Van Binh','Nam',TO_DATE('1975-06-15','YYYY-MM-DD'),'310000002','45','Nguyen Hue','Q3','TP HCM',NULL,NULL,NULL,'BN_002');
+--    INSERT INTO BENHNHAN VALUES ('BN_003','Le Thi Cam','Nu',TO_DATE('1990-09-20','YYYY-MM-DD'),'310000003','78','Pasteur','Q5','TP HCM','Hen suyen',NULL,'Penicillin','BN_003');
+--    INSERT INTO BENHNHAN VALUES ('BN_004','Pham Van Dung','Nam',TO_DATE('1968-12-05','YYYY-MM-DD'),'310000004','23','Ba Trieu','Hoan Kiem','Ha Noi','Benh tim mach',NULL,NULL,'BN_004');
+--    INSERT INTO BENHNHAN VALUES ('BN_005','Hoang Thi Em','Nu',TO_DATE('1985-04-10','YYYY-MM-DD'),'310000005','56','Tran Phu','Hai Chau','Da Nang',NULL,'Ung thu vu','Aspirin','BN_005');
+--    INSERT INTO BENHNHAN VALUES ('BN_006','Vu Van Phong','Nam',TO_DATE('1972-08-25','YYYY-MM-DD'),'310000006','89','Le Duan','Thanh Khe','Da Nang','Tieu duong',NULL,NULL,'BN_006');
+--    INSERT INTO BENHNHAN VALUES ('BN_007','Dang Thi Giang','Nu',TO_DATE('1995-02-14','YYYY-MM-DD'),'310000007','11','Hung Vuong','Ngo Quyen','Hai Phong',NULL,NULL,NULL,'BN_007');
+--    INSERT INTO BENHNHAN VALUES ('BN_008','Bui Van Hai','Nam',TO_DATE('1960-07-07','YYYY-MM-DD'),'310000008','34','Tran Hung Dao','Le Chan','Hai Phong','Xuong khop','Tim mach',NULL,'BN_008');
+--    INSERT INTO BENHNHAN VALUES ('BN_009','Do Thi Yen','Nu',TO_DATE('1988-11-11','YYYY-MM-DD'),'310000009','67','Nguyen Trai','Thanh Xuan','Ha Noi',NULL,NULL,'Sulfa','BN_009');
+--    INSERT INTO BENHNHAN VALUES ('BN_010','Nguyen Van Khoa','Nam',TO_DATE('1978-03-28','YYYY-MM-DD'),'310000010','90','Vo Thi Sau','Q3','TP HCM','Gan','Tieu duong',NULL,'BN_010');
+
+    DECLARE
+        v_i        NUMBER;
+        v_mabn     VARCHAR2(20);
+        v_username VARCHAR2(30);
+        v_cmnd     VARCHAR2(20);
+        v_duong NVARCHAR2(100);
+        v_quan  NVARCHAR2(100);
+        v_tinh  NVARCHAR2(50);
+        v_benh1 NVARCHAR2(100);
+        v_benh2 NVARCHAR2(100);
+        v_diung NVARCHAR2(100);
+    
+        TYPE t_arr IS TABLE OF VARCHAR2(100);
+    
+        ho   t_arr := t_arr('Nguyen','Tran','Le','Pham','Hoang','Phan','Vu','Dang','Bui','Do');
+        dem  t_arr := t_arr('Van','Thi','Huu','Duc','Minh','Ngoc','Quang','Thanh','Anh','Thu');
+        ten  t_arr := t_arr('Anh','Binh','Cam','Dung','Em','Phong','Giang','Hai','Yen','Khoa');
+    
+        duong t_arr := t_arr('Le Loi','Nguyen Hue','Tran Hung Dao','Vo Thi Sau','Pasteur');
+        quan  t_arr := t_arr('Q1','Q3','Q5','Thanh Xuan','Hai Chau');
+        tinh  t_arr := t_arr('TP HCM','Ha Noi','Da Nang','Hai Phong');
+    
+        benh t_arr := t_arr('Cao huyet ap','Tieu duong','Hen suyen','Tim mach','Gan');
+        diung t_arr := t_arr('Penicillin','Aspirin','Sulfa');
+    
+        v_hoten NVARCHAR2(100);
+    BEGIN
+        FOR v_i IN 1..100000 LOOP
+    
+            v_mabn     := 'BN_' || LPAD(v_i, 6, '0');
+            v_username := v_mabn;
+            v_cmnd     := '3100' || LPAD(v_i, 6, '0');
+    
+            v_hoten :=
+                ho(TRUNC(DBMS_RANDOM.VALUE(1, ho.COUNT+1))) || ' ' ||
+                dem(TRUNC(DBMS_RANDOM.VALUE(1, dem.COUNT+1))) || ' ' ||
+                ten(TRUNC(DBMS_RANDOM.VALUE(1, ten.COUNT+1)));
+                
+            v_duong := duong(TRUNC(DBMS_RANDOM.VALUE(1, duong.COUNT+1)));
+            v_quan  := quan(TRUNC(DBMS_RANDOM.VALUE(1, quan.COUNT+1)));
+            v_tinh  := tinh(TRUNC(DBMS_RANDOM.VALUE(1, tinh.COUNT+1)));
+            
+            v_benh1 := CASE WHEN DBMS_RANDOM.VALUE < 0.4
+                            THEN benh(TRUNC(DBMS_RANDOM.VALUE(1, benh.COUNT+1)))
+                            ELSE NULL END;
+            
+            v_benh2 := CASE WHEN DBMS_RANDOM.VALUE < 0.3
+                            THEN benh(TRUNC(DBMS_RANDOM.VALUE(1, benh.COUNT+1)))
+                            ELSE NULL END;
+            
+            v_diung := CASE WHEN DBMS_RANDOM.VALUE < 0.2
+                            THEN diung(TRUNC(DBMS_RANDOM.VALUE(1, diung.COUNT+1)))
+                            ELSE NULL END;    
+    
+            INSERT INTO BENHNHAN (
+                MABN, TENBN, PHAI, NGAYSINH, CCCD,
+                SONHA, TENDUONG, QUANHUYEN, TINHTP,
+                TIENSUBENH, TIENSUBENHGD, DIUNGTUOC, ORA_USERNAME
+            )
+            VALUES (
+                v_mabn,
+                v_hoten,
+                CASE WHEN DBMS_RANDOM.VALUE < 0.5 THEN 'Nam' ELSE 'Nu' END,
+                DATE '1960-01-01' + TRUNC(DBMS_RANDOM.VALUE(0, 20000)),
+                v_cmnd,
+                TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(1,200))),
+                v_duong,
+                v_quan,
+                v_tinh,
+                v_benh1,
+                v_benh2,
+                v_diung,
+                v_username
+            );
+    
+            -- commit mỗi 1000 dòng để tránh undo/redo quá lớn
+            IF MOD(v_i, 1000) = 0 THEN
+                COMMIT;
+            END IF;
+    
+        END LOOP;
+    
+        COMMIT;
+    END;
+    /
 
     COMMIT;
 
     -- 4.3 HỒ SƠ BỆNH ÁN
-    INSERT INTO HSBA VALUES ('HSBA_001','BN_001',TO_DATE('2026-01-10','YYYY-MM-DD'),'Viem da day cap','Dung thuoc giam acid va nghi ngoi','NV_BS_001','Tieu hoa',NULL);
-    INSERT INTO HSBA VALUES ('HSBA_002','BN_002',TO_DATE('2026-01-12','YYYY-MM-DD'),'Roi loan lo au','Lieu phap tam ly va thuoc giam lo','NV_BS_002','Than kinh',NULL);
-    INSERT INTO HSBA VALUES ('HSBA_003','BN_003',TO_DATE('2026-01-15','YYYY-MM-DD'),'Roi loan nhip tim','Thuoc dieu chinh nhip tim','NV_BS_003','Tim mach',NULL);
-    INSERT INTO HSBA VALUES ('HSBA_004','BN_004',TO_DATE('2026-01-20','YYYY-MM-DD'),'Viem loet ta trang','Phau thuat cat bo','NV_BS_001','Tieu hoa',NULL);
-    INSERT INTO HSBA VALUES ('HSBA_005','BN_005',TO_DATE('2026-01-25','YYYY-MM-DD'),'Nghi ngo dau hieu that trai','Theo doi va sieu am tim','NV_BS_003','Tim mach',NULL);
-    INSERT INTO HSBA VALUES ('HSBA_006','BN_001',TO_DATE('2026-02-01','YYYY-MM-DD'),'Cao huyet ap cap','Thuoc ha ap','NV_BS_006','Tim mach',NULL);
+    INSERT INTO HSBA VALUES ('HSBA_001','BN_000001',TO_DATE('2026-01-10','YYYY-MM-DD'),'Viem da day cap','Dung thuoc giam acid va nghi ngoi','NV_BS_001','Tieu hoa',NULL);
+    INSERT INTO HSBA VALUES ('HSBA_002','BN_000002',TO_DATE('2026-01-12','YYYY-MM-DD'),'Roi loan lo au','Lieu phap tam ly va thuoc giam lo','NV_BS_002','Than kinh',NULL);
+    INSERT INTO HSBA VALUES ('HSBA_003','BN_000003',TO_DATE('2026-01-15','YYYY-MM-DD'),'Roi loan nhip tim','Thuoc dieu chinh nhip tim','NV_BS_003','Tim mach',NULL);
+    INSERT INTO HSBA VALUES ('HSBA_004','BN_000004',TO_DATE('2026-01-20','YYYY-MM-DD'),'Viem loet ta trang','Phau thuat cat bo','NV_BS_001','Tieu hoa',NULL);
+    INSERT INTO HSBA VALUES ('HSBA_005','BN_000005',TO_DATE('2026-01-25','YYYY-MM-DD'),'Nghi ngo dau hieu that trai','Theo doi va sieu am tim','NV_BS_003','Tim mach',NULL);
+    INSERT INTO HSBA VALUES ('HSBA_006','BN_000001',TO_DATE('2026-02-01','YYYY-MM-DD'),'Cao huyet ap cap','Thuoc ha ap','NV_BS_006','Tim mach',NULL);
 
     COMMIT;
 
@@ -223,4 +490,4 @@ ALTER TABLE BENHNHAN ENABLE ROW MOVEMENT;
 
     COMMIT;
 
-    PROMPT === SCHEMA AND DATA DONE ===
+PROMPT === SCHEMA AND DATA DONE ===

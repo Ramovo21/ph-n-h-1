@@ -54,17 +54,28 @@ END;
 
 -- Xóa users mẫu (nhân viên + bệnh nhân)
 DECLARE
-    CURSOR c_users IS
-        SELECT username FROM dba_users
-        WHERE username LIKE 'BS_%' OR username LIKE 'DPV_%'
-           OR username LIKE 'KTV_%' OR username LIKE 'BN_%'
-           OR username LIKE 'OLS_U%'
-           OR username = 'BVOWNER';
+    TYPE t_users IS TABLE OF VARCHAR2(30);
+    v_users t_users;
 BEGIN
-    FOR r IN c_users LOOP
-        EXECUTE IMMEDIATE 'DROP USER "' || r.username || '" CASCADE';
+    -- snapshot trước
+    SELECT username BULK COLLECT INTO v_users
+    FROM dba_users
+    WHERE username LIKE 'BS_%' 
+       OR username LIKE 'DPV_%'
+       OR username LIKE 'KTV_%' 
+       OR username LIKE 'BN_%'
+       OR username LIKE 'OLS_U%'
+       OR username = 'BVOWNER';
+
+    -- drop sau
+    FOR i IN 1..v_users.COUNT LOOP
+        BEGIN
+            EXECUTE IMMEDIATE 'DROP USER "' || v_users(i) || '" CASCADE';
+        EXCEPTION
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('FAIL: ' || v_users(i));
+        END;
     END LOOP;
-EXCEPTION WHEN OTHERS THEN NULL;
 END;
 /
 
