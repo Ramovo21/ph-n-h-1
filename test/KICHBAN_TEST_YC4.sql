@@ -17,7 +17,7 @@ SELECT owner, job_name, job_type, job_action, state, enabled,
        TO_CHAR(last_start_date, 'DD-MON-YY HH24:MI') AS LAN_CHAY_CUOI,
        TO_CHAR(next_run_date, 'DD-MON-YY HH24:MI') AS LAN_CHAY_KE
 FROM dba_scheduler_jobs
-WHERE owner = 'BV_ADMIN' AND job_name = 'JOB_DAILY_BACKUP';
+WHERE owner = 'BVOWNER' AND job_name = 'JOB_DAILY_BACKUP';
 -- Ket qua mong doi: SCHEDULED, TRUE, repeat luc 2h sang
 
 -- Kiem tra 2 procedures ton tai
@@ -118,7 +118,7 @@ ORDER BY BAK_TIME DESC;
 -- Vi du: bvowner_20260331_113705.dmp
 -- Luu y: thay ten file dung voi file backup cua ban
 BEGIN
-    PROC_IMPORT_RESTORE('bvowner_20260501_150404.dmp');  -- <-- THAY TEN FILE THUC TE
+    PROC_IMPORT_RESTORE('bvowner_20260508_212712.dmp');  -- <-- THAY TEN FILE THUC TE
 END;
 /
 
@@ -187,7 +187,7 @@ FETCH FIRST 5 ROWS ONLY;
 -- Buoc 4: Flashback Query - xem du lieu truoc khi bi thay doi
 -- =======================================================================
 SELECT * FROM BVOWNER.DONTHUOC
-AS OF TIMESTAMP TIMESTAMP '2026-05-01 15:07:00'
+AS OF TIMESTAMP TIMESTAMP '2026-05-08 21:39:50'
 WHERE MAHSBA = 'HSBA_001';
 -- Ket qua mong doi: LIEUDUNG la gia tri dung truoc khi bi cap nhat sai
 
@@ -198,8 +198,8 @@ WHERE MAHSBA = 'HSBA_001';
 -- (Ban co the copy gia tri dung tu ket qua tren)
 
 UPDATE BVOWNER.DONTHUOC
-SET LIEUDUNG = 'Uong 1 vien/ngay truoc an sang 30 phut, dung truoc 7 ngay'
-WHERE MAHSBA = 'HSBA_001' AND TENTHUOC = 'Omeprazole 20mg';
+SET LIEUDUNG = 'Uong 3 vien/ngay truoc an 15-30 phut, lien tuc 5 ngay'
+WHERE MAHSBA = 'HSBA_001' AND TENTHUOC = 'Domperidone 10mg';
 COMMIT;
  
 -- =======================================================================
@@ -252,7 +252,7 @@ ORDER BY event_timestamp DESC;
 -- Buoc 4: Flashback Table
 -- =======================================================================
 FLASHBACK TABLE DONTHUOC
-TO TIMESTAMP TIMESTAMP '2026-05-01 23:10:00';
+TO TIMESTAMP TIMESTAMP '2026-05-08 21:52:30';
 COMMIT;
 
 -- =======================================================================
@@ -292,7 +292,8 @@ SELECT * FROM BVOWNER.DONTHUOC;
 -- =======================================================================
 SELECT original_name, object_name, droptime
 FROM user_recyclebin
-WHERE original_name = 'DONTHUOC';
+WHERE original_name = 'DONTHUOC'
+ORDER BY droptime;
 
 -- Kết quả mong đợi:
 -- thấy object_name dạng BIN$...
