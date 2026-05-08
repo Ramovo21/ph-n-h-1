@@ -32,6 +32,7 @@
                 private ComboBox cbPrivilege = null!;
                 private ComboBox cbUser = null!;
                 private ComboBox cbRole = null!;
+                private bool revokeRoleMembershipMode = false;
                 private CheckBox chkGrant = null!;
                 private DataTable? userTable;
                 private DataTable? roleTable;
@@ -514,7 +515,7 @@ private List<string> LoadDatabaseObjectItems()
     return items;
 }
 
-private void PopulateComboBox(ComboBox comboBox, IEnumerable<string> items)
+private void PopulateComboBox(ComboBox comboBox, IEnumerable<string> items, bool selectFirstItem = true)
 {
     if (comboBox == null || comboBox.IsDisposed)
     {
@@ -527,7 +528,7 @@ private void PopulateComboBox(ComboBox comboBox, IEnumerable<string> items)
         comboBox.Items.Add(item);
     }
 
-    if (comboBox.Items.Count > 0)
+    if (selectFirstItem && comboBox.Items.Count > 0)
     {
         comboBox.SelectedIndex = 0;
     }
@@ -560,7 +561,7 @@ private void LoadRolePageData(Label statusLabel)
     }
 }
 
-private void LoadPrivilegeSetupData(Label statusLabel)
+private void LoadPrivilegeSetupData(Label statusLabel, bool clearTargetSelection = false)
 {
     try
     {
@@ -588,10 +589,21 @@ private void LoadPrivilegeSetupData(Label statusLabel)
         );
         List<string> objects = LoadDatabaseObjectItems();
 
-        PopulateComboBox(cbUser, GetColumnValues(users, "USERNAME"));
-        PopulateComboBox(cbRole, GetColumnValues(roles, "ROLE"));
+        PopulateComboBox(cbUser, GetColumnValues(users, "USERNAME"), !clearTargetSelection);
+        PopulateComboBox(cbRole, GetColumnValues(roles, "ROLE"), !clearTargetSelection);
         PopulateComboBox(cbObject, objects);
-        LoadColumnsToCombo(cbObject.Text);
+        revokeRoleMembershipMode = false;
+
+        if (cbObject.SelectedItem != null)
+        {
+            LoadColumnsToCombo(cbObject.Text);
+        }
+        else
+        {
+            cbColumn.Items.Clear();
+            cbColumn.Items.Add("(Tất cả cột)");
+            cbColumn.SelectedIndex = 0;
+        }
 
         SetStatus(statusLabel, $"Đã tải {cbUser.Items.Count} user, {cbRole.Items.Count} role, {cbObject.Items.Count} đối tượng.", clrSuccess);
         ShowGridMessage("Đã sẵn sàng phân quyền. Chọn đối tượng để tiếp tục.");
@@ -1118,12 +1130,39 @@ private Control CreateRevokePage()
 
     AddBtn(actionPanel, "🚫 THU HỒI", clrDanger, 0, 0, Revoke);
     AddBtn(actionPanel, "📄 XEM QUYỀN", Color.DodgerBlue, 155, 0, LoadPrivileges);
-    AddBtn(actionPanel, "🔄 LÀM MỚI", Color.Teal, 310, 0, (s, e) => LoadPrivilegeSetupData(lblRevokeStatus));
+    AddBtn(actionPanel, "🔄 LÀM MỚI", Color.Teal, 310, 0, (s, e) => LoadPrivilegeSetupData(lblRevokeStatus, true));
 
     InitGridInPage(p, card, 24);
 
     ShowGridMessage("Đang chuẩn bị dữ liệu thu hồi quyền...");
-    this.BeginInvoke(new Action(() => LoadPrivilegeSetupData(lblRevokeStatus)));
+    this.BeginInvoke(new Action(() => LoadPrivilegeSetupData(lblRevokeStatus, true)));
+
+    grid.DoubleClick += (s, e) =>
+    {
+        if (grid.SelectedRows.Count == 0) return;
+        DataGridViewRow row = grid.SelectedRows[0];
+        string loai = row.Cells["LOAI"].Value?.ToString() ?? "";
+        string privilege = row.Cells["PRIVILEGE"].Value?.ToString() ?? "";
+        string doiTuong = row.Cells["DOI_TUONG"].Value?.ToString() ?? "";
+        string cot = row.Cells["COT"].Value?.ToString() ?? "";
+
+        if (loai == "ROLE")
+        {
+            if (!string.IsNullOrWhiteSpace(privilege))
+            {
+                cbRole.Text = privilege;
+                revokeRoleMembershipMode = true;
+            }
+            return;
+        }
+
+        cbPrivilege.Text = privilege;
+        if (!string.IsNullOrWhiteSpace(doiTuong))
+        {
+            cbObject.Text = doiTuong;
+        }
+        cbColumn.Text = string.IsNullOrWhiteSpace(cot) ? "(Tất cả cột)" : cot;
+    };
 
     return p;
 }
@@ -1187,7 +1226,10 @@ private void DropUser(object? s, EventArgs e)
             string pass = f.Password;
 
             if (ExecuteSql($"CREATE USER {user} IDENTIFIED BY {pass}"))
+            {
                 LoadUsers();
+                MessageBox.Show("Tạo user thành công!", "Thông báo");
+            }
         }
     }
 }
@@ -1210,14 +1252,16 @@ private void AlterUser(object? s, EventArgs e)
 }
     
 private void CreateRole(object? s, EventArgs e)
-
 {
     using (FormCreateRole f = new FormCreateRole())
     {
         if (f.ShowDialog() == DialogResult.OK)
         {
             if (ExecuteSql($"CREATE ROLE {f.RoleName}"))
+            {
                 LoadRoles();
+                MessageBox.Show("Tạo role thành công!", "Thông báo");
+            }
         }
     }
 }
@@ -1296,13 +1340,20 @@ private void LoadRoleToCombo()
 }
       private string GetTarget()
 {
-    var selectedUser = cbUser.SelectedItem;
-    if (selectedUser != null)
-        return selectedUser.ToString()?.ToUpperInvariant();
+    bool hasUser = cbUser.SelectedItem != null && !string.IsNullOrWhiteSpace(cbUser.Text);
+    bool hasRole = cbRole.SelectedItem != null && !string.IsNullOrWhiteSpace(cbRole.Text);
 
-    var selectedRole = cbRole.SelectedItem;
-    if (selectedRole != null)
-        return selectedRole.ToString()?.ToUpperInvariant();
+    if (hasUser && hasRole)
+    {
+        MessageBox.Show("Vui lòng chỉ chọn một trong User hoặc Role để xem/thu hồi quyền!");
+        return null;
+    }
+
+    if (hasUser)
+        return cbUser.Text.ToUpperInvariant();
+
+    if (hasRole)
+        return cbRole.Text.ToUpperInvariant();
 
     MessageBox.Show("Chọn User hoặc Role!");
     return null;
@@ -1322,7 +1373,10 @@ private void GrantUser(object? s, EventArgs e)
         return;
     }
 
-    ExecuteSql(BuildGrantSql(cbUser.SelectedItem!.ToString()!));
+    if (ExecuteSql(BuildGrantSql(cbUser.SelectedItem!.ToString()!)))
+    {
+        MessageBox.Show("Cấp quyền cho User thành công!", "Thông báo");
+    }
 }
 
 private void GrantRole(object? s, EventArgs e)
@@ -1339,7 +1393,10 @@ private void GrantRole(object? s, EventArgs e)
         return;
     }
 
-    ExecuteSql(BuildGrantSql(cbRole.SelectedItem!.ToString()!));
+    if (ExecuteSql(BuildGrantSql(cbRole.SelectedItem!.ToString()!)))
+    {
+        MessageBox.Show("Cấp quyền cho Role thành công!", "Thông báo");
+    }
 }
 
 private void GrantRoleToUser(object? s, EventArgs e)
@@ -1350,11 +1407,29 @@ private void GrantRoleToUser(object? s, EventArgs e)
         return;
     }
 
-    ExecuteSql($"GRANT {cbRole.SelectedItem} TO {cbUser.SelectedItem}");
+    if (ExecuteSql($"GRANT {cbRole.SelectedItem} TO {cbUser.SelectedItem}"))
+    {
+        MessageBox.Show("Gán Role cho User thành công!", "Thông báo");
+    }
 }
 
 private void Revoke(object? s, EventArgs e)
 {
+    if (revokeRoleMembershipMode && cbUser.SelectedItem != null && cbRole.SelectedItem != null)
+    {
+        string user = cbUser.Text.Trim();
+        string role = cbRole.Text.Trim();
+        if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(role))
+        {
+            if (ExecuteSql($"REVOKE {role} FROM {user}"))
+            {
+                MessageBox.Show("Thu hồi role khỏi user thành công!", "Thông báo");
+            }
+            revokeRoleMembershipMode = false;
+            return;
+        }
+    }
+
     string? target = GetTarget();
     if (target == null) return;
 
@@ -1373,16 +1448,24 @@ private void Revoke(object? s, EventArgs e)
     if (IsExecutableObject(cbObject.Text))
     {
         sql = $"REVOKE EXECUTE ON {obj} FROM {target}";
-        ExecuteSql(sql);
+        if (ExecuteSql(sql))
+        {
+            MessageBox.Show("Thu hồi quyền thành công!", "Thông báo");
+        }
         return;
     }
 
-    if ((privilege == "SELECT" || privilege == "UPDATE") && col != "")
-        sql = $"REVOKE {privilege} ({col}) ON {obj} FROM {target}";
+    if (privilege == "UPDATE")
+        sql = $"REVOKE {privilege} ON {obj} FROM {target}";
+    else if (privilege == "SELECT" && col != "")
+        sql = $"REVOKE SELECT ON {obj} FROM {target}";
     else
         sql = $"REVOKE {privilege} ON {obj} FROM {target}";
 
-    ExecuteSql(sql);
+    if (ExecuteSql(sql))
+    {
+        MessageBox.Show("Thu hồi quyền thành công!", "Thông báo");
+    }
 }
  private string BuildGrantSql(string target)
 {
@@ -1395,7 +1478,7 @@ private void Revoke(object? s, EventArgs e)
     if (IsExecutableObject(rawObj))
         return $"GRANT EXECUTE ON {obj} TO {target}{grantOpt}";
 
-    if ((privilege == "SELECT" || privilege == "UPDATE") && col != "")
+    if (privilege == "UPDATE" && col != "")
         return $"GRANT {privilege} ({col}) ON {obj} TO {target}{grantOpt}";
 
     return $"GRANT {privilege} ON {obj} TO {target}{grantOpt}";
@@ -1432,6 +1515,12 @@ void LoadPrivileges(object? s, EventArgs e)
             UNION ALL
             SELECT 'COLUMN' AS LOAI, PRIVILEGE, OWNER||'.'||TABLE_NAME AS DOI_TUONG, GRANTABLE, COLUMN_NAME AS COT
             FROM ALL_COL_PRIVS WHERE GRANTEE = '{safeName}'
+            UNION ALL
+            SELECT 'SYSTEM' AS LOAI, PRIVILEGE, NULL AS DOI_TUONG, ADMIN_OPTION AS GRANTABLE, NULL AS COT
+            FROM ALL_SYS_PRIVS WHERE GRANTEE = '{safeName}'
+            UNION ALL
+            SELECT 'ROLE' AS LOAI, GRANTED_ROLE AS PRIVILEGE, NULL AS DOI_TUONG, ADMIN_OPTION AS GRANTABLE, NULL AS COT
+            FROM ALL_ROLE_PRIVS WHERE GRANTEE = '{safeName}'
             ORDER BY 1, 2"
         );
         grid.DataSource = dt;

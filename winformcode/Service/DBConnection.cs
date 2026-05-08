@@ -7,7 +7,7 @@ namespace HospitalApp.Services
     public class DBConnection
     {
         private const string DataSourceEnvVarName = "HOSPITALAPP_ORACLE_DATASOURCE";
-        private const string DefaultDataSource = "localhost:1521/XEPDB1";
+        private const string DefaultDataSource = "localhost:1521/orclpdb";
 
         public static string GetEffectiveDataSource()
         {
