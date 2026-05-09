@@ -1376,6 +1376,7 @@ private void GrantUser(object? s, EventArgs e)
     if (ExecuteSql(BuildGrantSql(cbUser.SelectedItem!.ToString()!)))
     {
         MessageBox.Show("Cấp quyền cho User thành công!", "Thông báo");
+        LoadPrivileges(null, EventArgs.Empty); // Tự động refresh grid xem quyền
     }
 }
 
@@ -1396,6 +1397,7 @@ private void GrantRole(object? s, EventArgs e)
     if (ExecuteSql(BuildGrantSql(cbRole.SelectedItem!.ToString()!)))
     {
         MessageBox.Show("Cấp quyền cho Role thành công!", "Thông báo");
+        LoadPrivileges(null, EventArgs.Empty); // Tự động refresh grid xem quyền
     }
 }
 
@@ -1410,6 +1412,7 @@ private void GrantRoleToUser(object? s, EventArgs e)
     if (ExecuteSql($"GRANT {cbRole.SelectedItem} TO {cbUser.SelectedItem}"))
     {
         MessageBox.Show("Gán Role cho User thành công!", "Thông báo");
+        LoadPrivileges(null, EventArgs.Empty); // Tự động refresh grid xem quyền
     }
 }
 
@@ -1424,6 +1427,7 @@ private void Revoke(object? s, EventArgs e)
             if (ExecuteSql($"REVOKE {role} FROM {user}"))
             {
                 MessageBox.Show("Thu hồi role khỏi user thành công!", "Thông báo");
+                LoadPrivileges(null, EventArgs.Empty); // Tự động refresh grid xem quyền
             }
             revokeRoleMembershipMode = false;
             return;
@@ -1451,6 +1455,7 @@ private void Revoke(object? s, EventArgs e)
         if (ExecuteSql(sql))
         {
             MessageBox.Show("Thu hồi quyền thành công!", "Thông báo");
+            LoadPrivileges(null, EventArgs.Empty); // Tự động refresh grid xem quyền
         }
         return;
     }
@@ -1465,6 +1470,7 @@ private void Revoke(object? s, EventArgs e)
     if (ExecuteSql(sql))
     {
         MessageBox.Show("Thu hồi quyền thành công!", "Thông báo");
+        LoadPrivileges(null, EventArgs.Empty); // Tự động refresh grid xem quyền
     }
 }
  private string BuildGrantSql(string target)
